@@ -1,0 +1,48 @@
+# 环境变量和敏感信息
+.env
+.env.local
+.env.*.local
+
+# Python 虚拟环境
+backend/venv/
+backend/env/
+backend/.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node.js
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 项目特定
+backend/data/
+uploads/
