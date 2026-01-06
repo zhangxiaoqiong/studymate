@@ -155,6 +155,7 @@ function App() {
   // 删除已保存的解释
   const handleDeleteExplanation = (keyword) => {
     if (!documentData) return
+    if (!window.confirm(`确定要删除 "${keyword}" 的解释吗？`)) return
     const { [keyword]: _, ...restExplanations } = documentData.savedExplanations
     const updatedDoc = {
       ...documentData,
@@ -177,7 +178,8 @@ function App() {
   }
 
   // 刷新解释（重新调用 API） - 流式版本
-  const handleRefreshExplanation = async (keyword) => {
+  const handleRefreshExplanation = async () => {
+    const keyword = selectedKeyword
     setLoadingExplanation(true)
     setExplanation('')  // 清空旧解释
     try {
@@ -384,7 +386,7 @@ function App() {
                 selectedKeyword={selectedKeyword}
                 onSelectKeyword={setSelectedKeyword}
                 onDelete={handleDeleteExplanation}
-                width={350}
+                width={256}
               />
             )}
 

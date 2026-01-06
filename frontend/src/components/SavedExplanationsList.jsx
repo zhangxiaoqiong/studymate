@@ -26,15 +26,15 @@ const SavedExplanationsList = ({
 
   return (
     <div
-      className="bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden"
+      className="bg-blue-50 border-l border-gray-200 flex flex-col overflow-hidden shadow-sm"
       style={{ width: `${width}px` }}
     >
       {/* 头部 */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
-        <h3 className="text-sm font-bold text-gray-900">
+      <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+        <h3 className="text-base font-bold text-gray-900">
           📚 已保存解释
         </h3>
-        <p className="text-xs text-gray-600 mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           {Object.keys(savedExplanations).length} 个
         </p>
       </div>
