@@ -199,7 +199,17 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (error) {
-      alert('保存配置失败：' + error.message)
+      // 更好的错误处理 - 避免 [object Object]
+      let errorMsg = '保存配置失败'
+      if (error instanceof Error) {
+        errorMsg = error.message
+      } else if (typeof error === 'string') {
+        errorMsg = error
+      } else if (error && typeof error === 'object') {
+        errorMsg = error.detail || JSON.stringify(error)
+      }
+      console.error('保存配置错误:', error)
+      alert('保存配置失败：' + errorMsg)
     } finally {
       setSaving(false)
     }
