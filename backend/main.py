@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 import os
 from dotenv import load_dotenv
 import tempfile
@@ -68,7 +68,7 @@ class LLMConfigRequest(BaseModel):
     modelName: str
     temperature: float = 0.7
     maxTokens: int = 1000
-    editingConfigName: str = None  # 编辑时的原始配置名称，用于判断是否是编辑模式
+    editingConfigName: Optional[str] = None  # 编辑时的原始配置名称，用于判断是否是编辑模式
 
 class LLMConfigResponse(BaseModel):
     apiBase: str
