@@ -132,7 +132,16 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
       return
     }
 
-    const configName = `${modelName} @ ${apiBase.split('/')[2]}`
+    // 更安全的配置名称生成方式
+    let configName = `${modelName} @ ${apiBase}`
+    try {
+      const host = new URL(apiBase).hostname
+      configName = `${modelName} @ ${host}`
+    } catch (e) {
+      console.warn('解析 API Base URL 失败，使用原始值:', apiBase)
+    }
+
+    console.log('配置名称:', configName)
 
     setSaving(true)
     try {
