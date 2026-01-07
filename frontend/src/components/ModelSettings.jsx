@@ -111,6 +111,10 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
   const handleCancel = () => {
     setEditingConfigName(null)
     setIsCreatingNew(false)
+    // 如果在菜单模式下，返回配置列表；如果在独立模式下，关闭对话框
+    if (!isInMenu) {
+      onClose()
+    }
   }
 
   const handleSave = async () => {
@@ -419,48 +423,47 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
               {Object.entries(configurations).map(([configName, config]) => (
                 <div
                   key={configName}
-                  className={`p-2 rounded-lg border transition-all flex items-center justify-between ${
+                  onClick={() => selectedModel !== configName && handleUseConfiguration(configName)}
+                  className={`p-2 rounded-lg border transition-all cursor-pointer group ${
                     selectedModel === configName
                       ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
                       : editingConfigName === configName
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-gray-50'
+                      : 'border-gray-200 bg-gray-50 hover:border-green-400 hover:bg-green-50'
                   }`}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {configName}
-                      {selectedModel === configName && <span className="text-green-600 font-bold ml-2">✓ 使用中</span>}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {configName}
+                        {selectedModel === configName && <span className="text-green-600 font-bold ml-2">✓ 使用中</span>}
+                      </div>
+                      <div className="text-xs text-gray-600">{config.modelName}</div>
                     </div>
-                    <div className="text-xs text-gray-600">{config.modelName}</div>
-                  </div>
-                  <div className="flex gap-1 ml-2 flex-shrink-0">
-                    {selectedModel !== configName && (
+                    <div className="flex gap-1 ml-2 flex-shrink-0">
                       <button
-                        onClick={() => handleUseConfiguration(configName)}
-                        disabled={saving}
-                        className="p-1 text-xs text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
-                        title="使用"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSelectConfiguration(configName)
+                        }}
+                        className="p-1 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="编辑"
                       >
-                        ✓
+                        ✏️
                       </button>
-                    )}
-                    <button
-                      onClick={() => handleSelectConfiguration(configName)}
-                      className="p-1 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="编辑"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConfiguration(configName)}
-                      className="p-1 hover:bg-red-100 rounded transition-colors"
-                      title="删除"
-                    >
-                      <svg className="w-4 h-4 text-red-600 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteConfiguration(configName)
+                        }}
+                        className="p-1 hover:bg-red-100 rounded transition-colors"
+                        title="删除"
+                      >
+                        <svg className="w-4 h-4 text-red-600 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -512,12 +515,13 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
                 {Object.entries(configurations).map(([configName, config]) => (
                   <div
                     key={configName}
-                    className={`p-3 rounded-lg border-2 transition-all ${
+                    onClick={() => selectedModel !== configName && handleUseConfiguration(configName)}
+                    className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
                       selectedModel === configName
                         ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
                         : editingConfigName === configName
                         ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                        : 'border-gray-200 bg-gray-50 hover:border-green-400 hover:bg-green-50'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -531,28 +535,20 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
                         </div>
                       </div>
                       <div className="flex gap-2 ml-2">
-                        {selectedModel !== configName && (
-                          <button
-                            onClick={() => handleUseConfiguration(configName)}
-                            disabled={saving}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm rounded transition-colors"
-                          >
-                            使用
-                          </button>
-                        )}
-                        {selectedModel === configName && (
-                          <span className="px-3 py-1 bg-green-600 text-white text-sm rounded">
-                            ✓ 使用中
-                          </span>
-                        )}
                         <button
-                          onClick={() => handleSelectConfiguration(configName)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSelectConfiguration(configName)
+                          }}
                           className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
                         >
                           编辑
                         </button>
                         <button
-                          onClick={() => handleDeleteConfiguration(configName)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteConfiguration(configName)
+                          }}
                           className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors font-bold"
                         >
                           🗑️ 删除
