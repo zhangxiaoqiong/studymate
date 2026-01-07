@@ -19,23 +19,58 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
 
   // 加载保存的配置和当前使用的配置
   useEffect(() => {
-    const savedConfigs = localStorage.getItem('llmConfigurations')
-    const savedSelected = localStorage.getItem('selectedLLMConfig')
+    const loadConfigs = async () => {
+      try {
+        // 先从 localStorage 加载（快速）
+        const savedConfigs = localStorage.getItem('llmConfigurations')
+        const savedSelected = localStorage.getItem('selectedLLMConfig')
 
-    if (savedConfigs) {
-      const configs = JSON.parse(savedConfigs)
-      setConfigurations(configs)
-      // 只有当 savedSelected 实际存在于 configs 中时才设置
-      if (savedSelected && configs[savedSelected]) {
-        setSelectedModel(savedSelected)
-      } else {
-        // 如果 localStorage 中保存的配置不存在，清空选中状态
-        localStorage.removeItem('selectedLLMConfig')
-        setSelectedModel(null)
+        if (savedConfigs) {
+          const configs = JSON.parse(savedConfigs)
+          setConfigurations(configs)
+          // 只有当 savedSelected 实际存在于 configs 中时才设置
+          if (savedSelected && configs[savedSelected]) {
+            setSelectedModel(savedSelected)
+          } else {
+            // 如果 localStorage 中保存的配置不存在，清空选中状态
+            localStorage.removeItem('selectedLLMConfig')
+            setSelectedModel(null)
+          }
+        } else {
+          setSelectedModel(null)
+        }
+
+        // 然后从后端同步配置列表（确保和数据库一致）
+        const response = await fetch('/user_config')
+        if (response.ok) {
+          const data = await response.json()
+          console.log('从后端同步配置列表:', data)
+
+          if (data.configs && Array.isArray(data.configs)) {
+            // 转换后端返回的配置列表格式为前端需要的格式
+            const backendConfigs = {}
+            data.configs.forEach(config => {
+              backendConfigs[config.config_name] = {
+                apiBase: config.api_base,
+                modelName: config.model_name,
+                temperature: config.temperature,
+                maxTokens: config.max_tokens,
+              }
+            })
+            // 检查 localStorage 中的配置是否在后端存在
+            // 如果不存在，从 localStorage 移除
+            const cleanedConfigs = { ...backendConfigs }
+            localStorage.setItem('llmConfigurations', JSON.stringify(cleanedConfigs))
+            setConfigurations(cleanedConfigs)
+          }
+        }
+      } catch (error) {
+        console.warn('加载配置时出错:', error)
+        // 静默失败，使用 localStorage 的数据
       }
-    } else {
-      setSelectedModel(null)
     }
+
+    loadConfigs()
   }, [])
 
   const presets = [
@@ -246,6 +281,7 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
     setSaving(true)
     try {
       console.log('开始切换配置:', configName)
+      console.log('前端保存的配置信息:', config)
 
       // 切换配置（不需要发送 API Key，后端从数据库加载）
       const response = await fetch(`/api/activate_config/${encodeURIComponent(configName)}`, {
@@ -267,6 +303,13 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
           console.log('无法解析错误响应:', parseError)
           errorDetail = `HTTP ${response.status}: ${response.statusText}`
         }
+
+        // 如果是 404，说明后端找不到配置，可能是名称不匹配
+        if (response.status === 404) {
+          console.error('配置在后端数据库中不存在，可能是名称不匹配')
+          errorDetail = errorDetail + ' - 配置在服务器中不存在，请重新保存'
+        }
+
         throw new Error(errorDetail)
       }
 
