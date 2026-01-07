@@ -404,14 +404,28 @@ async def set_llm_config(config: LLMConfigRequest):
 @app.post("/activate_config/{config_name}")
 async def activate_config_endpoint(config_name: str):
     """激活一个配置"""
+    print(f"API配置: 收到激活请求，配置名称='{config_name}'")
+
+    # 检查配置是否存在
+    existing = get_config_by_name(config_name)
+    if not existing:
+        print(f"API配置: 配置不存在")
+        raise HTTPException(status_code=404, detail=f"配置'{config_name}'不存在")
+
+    print(f"API配置: 激活配置...")
     success = activate_config(config_name)
 
     if not success:
+        print(f"API配置: 激活失败")
         raise HTTPException(status_code=400, detail="激活配置失败")
+
+    print(f"API配置: 激活成功，更新全局配置...")
 
     # 更新全局配置
     global llm_config
     llm_config = get_current_config()
+
+    print(f"API配置: 返回成功响应")
 
     return {
         "message": f"已激活配置: {config_name}",

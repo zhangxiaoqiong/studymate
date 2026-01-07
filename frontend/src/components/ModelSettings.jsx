@@ -245,6 +245,8 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
 
     setSaving(true)
     try {
+      console.log('开始切换配置:', configName)
+
       // 切换配置（不需要发送 API Key，后端从数据库加载）
       const response = await fetch(`/api/activate_config/${encodeURIComponent(configName)}`, {
         method: 'POST',
@@ -253,17 +255,38 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
         },
       })
 
+      console.log('响应状态:', response.status, response.statusText)
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || '切换失败')
+        let errorDetail = '切换失败'
+        try {
+          const errorData = await response.json()
+          console.log('错误响应:', errorData)
+          errorDetail = errorData?.detail || JSON.stringify(errorData)
+        } catch (parseError) {
+          console.log('无法解析错误响应:', parseError)
+          errorDetail = `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorDetail)
       }
+
+      console.log('切换成功')
 
       localStorage.setItem('selectedLLMConfig', configName)
       setSelectedModel(configName)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (error) {
-      alert('切换配置失败：' + error.message)
+      let errorMsg = '切换配置失败'
+      if (error instanceof Error) {
+        errorMsg = error.message
+      } else if (typeof error === 'string') {
+        errorMsg = error
+      } else if (error && typeof error === 'object') {
+        errorMsg = error.detail || error.message || JSON.stringify(error)
+      }
+      console.error('切换配置错误:', error, '错误消息:', errorMsg)
+      alert('切换配置失败：' + errorMsg)
     } finally {
       setSaving(false)
     }
