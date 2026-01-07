@@ -330,20 +330,38 @@ async def get_llm_config_detail(config_name: str):
 async def set_llm_config(config: LLMConfigRequest):
     """保存完整的 LLM 配置（包含 API Key，加密存储）"""
     try:
-        if not config.apiKey:
+        # 如果是编辑现有配置且没有提供 API Key，则使用现有的
+        api_key = config.apiKey
+        if config.editingConfigName and not api_key:
+            # 获取现有配置的 API Key
+            existing = get_decrypted_config(config.editingConfigName)
+            if existing:
+                api_key = existing.get('api_key')
+            if not api_key:
+                raise HTTPException(status_code=400, detail="无法找到原有 API Key，请提供新的 API Key")
+
+        if not api_key:
             raise HTTPException(status_code=400, detail="API Key 不能为空")
 
         print(f"API配置: 保存配置 '{config.configName}'...")
+
+        # 判断是否需要激活配置
+        # 只有在新建时才自动激活，编辑时保持原有激活状态
+        is_active = not config.editingConfigName  # 新建时为 True，编辑时为 False
+
+        # 如果在编辑且配置名称改变，需要先删除旧配置
+        if config.editingConfigName and config.editingConfigName != config.configName:
+            delete_config(config.editingConfigName)
 
         # 保存到数据库（自动加密 API Key）
         success = save_config(
             config.configName,
             config.apiBase,
-            config.apiKey,
+            api_key,
             config.modelName,
             config.temperature,
             config.maxTokens,
-            is_active=True
+            is_active=is_active
         )
 
         if not success:

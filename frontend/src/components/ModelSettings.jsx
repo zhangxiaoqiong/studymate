@@ -80,10 +80,12 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
 
   const handleSelectConfiguration = async (configName) => {
     try {
+      setEditingConfigName(configName)  // 立即设置进入编辑模式
       // 从后端获取完整的配置信息（包括解密的 API Key）
       const response = await fetch(`/api/llm_config/${encodeURIComponent(configName)}`)
       if (!response.ok) {
-        throw new Error('获取配置失败')
+        const errorData = await response.json()
+        throw new Error(errorData.detail || '获取配置失败')
       }
 
       const config = await response.json()
@@ -92,8 +94,9 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
       setTemperature(config.temperature || 0.7)
       setMaxTokens(config.maxTokens || 1000)
       setApiKey(config.apiKey)  // 自动填充 API Key
-      setEditingConfigName(configName)
     } catch (error) {
+      setEditingConfigName(null)  // 失败时取消编辑模式
+      console.error('获取配置失败:', error)
       alert('获取配置失败：' + error.message)
     }
   }
@@ -146,6 +149,7 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
           modelName,
           temperature,
           maxTokens,
+          editingConfigName,  // 告诉后端这是编辑模式还是新建模式
         }),
       })
 
