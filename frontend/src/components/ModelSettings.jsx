@@ -136,6 +136,8 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
 
     setSaving(true)
     try {
+      console.log('开始保存配置:', { configName, editingConfigName, modelName, apiBase })
+
       // 发送给后端，包含 API Key（后端会加密存储）
       const response = await fetch('/api/llm_config', {
         method: 'POST',
@@ -153,10 +155,23 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
         }),
       })
 
+      console.log('响应状态:', response.status, response.statusText)
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || '保存失败')
+        let errorDetail = '保存失败'
+        try {
+          const errorData = await response.json()
+          console.log('错误响应:', errorData)
+          errorDetail = errorData?.detail || JSON.stringify(errorData)
+        } catch (parseError) {
+          console.log('无法解析错误响应:', parseError)
+          errorDetail = `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorDetail)
       }
+
+      const result = await response.json()
+      console.log('保存成功:', result)
 
       // 如果在编辑模式，删除旧配置
       if (editingConfigName && editingConfigName !== configName) {
@@ -206,9 +221,9 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
       } else if (typeof error === 'string') {
         errorMsg = error
       } else if (error && typeof error === 'object') {
-        errorMsg = error.detail || JSON.stringify(error)
+        errorMsg = error.detail || error.message || JSON.stringify(error)
       }
-      console.error('保存配置错误:', error)
+      console.error('保存配置异常:', error, '错误消息:', errorMsg)
       alert('保存配置失败：' + errorMsg)
     } finally {
       setSaving(false)
