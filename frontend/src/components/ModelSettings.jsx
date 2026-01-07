@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const ModelSettings = ({ onClose, isInMenu = false }) => {
   // 表单状态
@@ -15,6 +15,7 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
   const [selectedModel, setSelectedModel] = useState(null)  // 当前使用中的配置
   const [editingConfigName, setEditingConfigName] = useState(null)  // 正在编辑的配置
   const [isCreatingNew, setIsCreatingNew] = useState(false)  // 是否在创建新配置
+  const menuScrollRef = useRef(null)  // 用于滚动菜单到顶部
 
   // 加载保存的配置和当前使用的配置
   useEffect(() => {
@@ -24,9 +25,16 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
     if (savedConfigs) {
       const configs = JSON.parse(savedConfigs)
       setConfigurations(configs)
+      // 只有当 savedSelected 实际存在于 configs 中时才设置
       if (savedSelected && configs[savedSelected]) {
         setSelectedModel(savedSelected)
+      } else {
+        // 如果 localStorage 中保存的配置不存在，清空选中状态
+        localStorage.removeItem('selectedLLMConfig')
+        setSelectedModel(null)
       }
+    } else {
+      setSelectedModel(null)
     }
   }, [])
 
@@ -62,6 +70,13 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
       modelName: '本地模型名称',
     },
   ]
+
+  // 当编辑或新建配置时，在菜单模式下滚动到顶部
+  useEffect(() => {
+    if (isInMenu && (editingConfigName || isCreatingNew) && menuScrollRef.current) {
+      menuScrollRef.current.scrollTop = 0
+    }
+  }, [editingConfigName, isCreatingNew, isInMenu])
 
   const handleSelectConfiguration = async (configName) => {
     try {
@@ -156,10 +171,20 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
         maxTokens,
       }
       localStorage.setItem('llmConfigurations', JSON.stringify(savedConfigs))
-      localStorage.setItem('selectedLLMConfig', configName)
+
+      // 只有在编辑已选中的配置时，才保持其选中状态
+      if (editingConfigName && editingConfigName !== configName && selectedModel === editingConfigName) {
+        // 配置被重命名，更新选中状态
+        localStorage.setItem('selectedLLMConfig', configName)
+        setSelectedModel(configName)
+      } else if (!editingConfigName && !selectedModel) {
+        // 只有当这是第一个配置且没有选中任何配置时，才选中它
+        localStorage.setItem('selectedLLMConfig', configName)
+        setSelectedModel(configName)
+      }
+      // 否则不改变选中状态（新建时不自动选中）
 
       setConfigurations(savedConfigs)
-      setSelectedModel(configName)
       setApiKey('')  // 清除前端的 API Key
       setEditingConfigName(null)  // 清除编辑模式
       setIsCreatingNew(false)  // 清除创建新配置标志
@@ -228,91 +253,12 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
   // 菜单模式布局（单栏）
   if (isInMenu) {
     return (
-      <div className="p-6 space-y-6 overflow-y-auto h-full">
-        {/* 没有配置时的新增按钮 */}
-        {Object.keys(configurations).length === 0 && !editingConfigName && !isCreatingNew && (
-          <div className="text-center py-6 border-b-2 border-gray-300">
-            <p className="text-sm text-gray-600 mb-3">暂无保存的配置</p>
-            <button
-              onClick={handleNewConfig}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-            >
-              ➕ 创建新配置
-            </button>
-          </div>
-        )}
-
-        {/* 已保存配置列表 - 最上面（仅在非编辑/新建模式时显示） */}
-        {Object.keys(configurations).length > 0 && !editingConfigName && !isCreatingNew && (
-          <div className="pb-6 border-b-2 border-gray-300">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-700">📋 已保存的配置</h4>
-              <button
-                onClick={handleNewConfig}
-                className="px-2 py-1 border border-gray-300 text-gray-700 text-xs rounded hover:bg-gray-100 transition-colors font-medium"
-                title="创建新配置"
-              >
-                ➕ 新建
-              </button>
-            </div>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {Object.entries(configurations).map(([configName, config]) => (
-                <div
-                  key={configName}
-                  className={`p-2 rounded-lg border transition-all flex items-center justify-between ${
-                    selectedModel === configName
-                      ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
-                      : editingConfigName === configName
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {configName}
-                      {selectedModel === configName && <span className="text-green-600 font-bold ml-2">✓ 使用中</span>}
-                    </div>
-                    <div className="text-xs text-gray-600">{config.modelName}</div>
-                  </div>
-                  <div className="flex gap-1 ml-2 flex-shrink-0">
-                    {selectedModel !== configName && (
-                      <button
-                        onClick={() => handleUseConfiguration(configName)}
-                        disabled={saving}
-                        className="p-1 text-xs text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
-                        title="使用"
-                      >
-                        ✓
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleSelectConfiguration(configName)}
-                      className="p-1 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="编辑"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConfiguration(configName)}
-                      className="p-1 hover:bg-red-100 rounded transition-colors"
-                      title="删除"
-                    >
-                      <svg className="w-4 h-4 text-red-600 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 编辑/新建配置部分 - 下面 */}
+      <div className="p-6 space-y-6 overflow-y-auto h-full" ref={menuScrollRef}>
+        {/* 编辑/新建配置部分 - 最上面（优先显示） */}
         {(editingConfigName || isCreatingNew) && (
           <>
             {/* 标题 */}
-            <div>
+            <div className="pb-4 border-b-2 border-gray-300">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingConfigName ? `✏️ 编辑配置` : '➕ 新建配置'}
               </h3>
@@ -425,7 +371,7 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
             </div>
 
             {/* 按钮 */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-4 border-t-2 border-gray-300">
               <button
                 onClick={handleCancel}
                 className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded text-sm font-medium transition-colors"
@@ -441,6 +387,85 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
               </button>
             </div>
           </>
+        )}
+
+        {/* 没有配置时的新增按钮 */}
+        {Object.keys(configurations).length === 0 && !editingConfigName && !isCreatingNew && (
+          <div className="text-center py-6 border-b-2 border-gray-300">
+            <p className="text-sm text-gray-600 mb-3">暂无保存的配置</p>
+            <button
+              onClick={handleNewConfig}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            >
+              ➕ 创建新配置
+            </button>
+          </div>
+        )}
+
+        {/* 已保存配置列表 - 下面（仅在非编辑/新建模式时显示） */}
+        {Object.keys(configurations).length > 0 && !editingConfigName && !isCreatingNew && (
+          <div className="pb-6 border-b-2 border-gray-300">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-gray-700">📋 已保存的配置</h4>
+              <button
+                onClick={handleNewConfig}
+                className="px-2 py-1 border border-gray-300 text-gray-700 text-xs rounded hover:bg-gray-100 transition-colors font-medium"
+                title="创建新配置"
+              >
+                ➕ 新建
+              </button>
+            </div>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {Object.entries(configurations).map(([configName, config]) => (
+                <div
+                  key={configName}
+                  className={`p-2 rounded-lg border transition-all flex items-center justify-between ${
+                    selectedModel === configName
+                      ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                      : editingConfigName === configName
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {configName}
+                      {selectedModel === configName && <span className="text-green-600 font-bold ml-2">✓ 使用中</span>}
+                    </div>
+                    <div className="text-xs text-gray-600">{config.modelName}</div>
+                  </div>
+                  <div className="flex gap-1 ml-2 flex-shrink-0">
+                    {selectedModel !== configName && (
+                      <button
+                        onClick={() => handleUseConfiguration(configName)}
+                        disabled={saving}
+                        className="p-1 text-xs text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
+                        title="使用"
+                      >
+                        ✓
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleSelectConfiguration(configName)}
+                      className="p-1 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="编辑"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDeleteConfiguration(configName)}
+                      className="p-1 hover:bg-red-100 rounded transition-colors"
+                      title="删除"
+                    >
+                      <svg className="w-4 h-4 text-red-600 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     )
