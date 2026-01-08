@@ -366,7 +366,7 @@ async def set_llm_config(config: LLMConfigRequest):
             delete_config(config.editingConfigName)
 
         # 保存到数据库（自动加密 API Key）
-        success = save_config(
+        success, config_id = save_config(
             config.configName,
             config.apiBase,
             api_key,
@@ -380,7 +380,7 @@ async def set_llm_config(config: LLMConfigRequest):
             print(f"API配置: 保存失败")
             raise HTTPException(status_code=400, detail="保存配置失败")
 
-        print(f"API配置: 保存成功，更新全局配置...")
+        print(f"API配置: 保存成功，配置ID={config_id}，更新全局配置...")
 
         # 更新全局配置
         global llm_config
@@ -391,6 +391,7 @@ async def set_llm_config(config: LLMConfigRequest):
         return {
             "message": "配置已更新",
             "configName": config.configName,
+            "configId": config_id,
             "apiBase": config.apiBase,
             "modelName": config.modelName,
             "temperature": config.temperature,

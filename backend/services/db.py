@@ -84,8 +84,8 @@ def get_all_configs() -> list:
 
 def save_config(config_name: str, api_base: str, api_key: str,
                 model_name: str, temperature: float, max_tokens: int,
-                is_active: bool = False) -> bool:
-    """保存配置（加密 API Key）"""
+                is_active: bool = False) -> tuple:
+    """保存配置（加密 API Key）并返回配置 ID"""
     init_db()
 
     if not api_key:
@@ -101,8 +101,10 @@ def save_config(config_name: str, api_base: str, api_key: str,
         cursor.execute("SELECT id FROM llm_configs WHERE config_name = ?", (config_name,))
         existing = cursor.fetchone()
 
+        config_id = None
         if existing:
             # 更新现有配置
+            config_id = existing[0]
             cursor.execute("""
                 UPDATE llm_configs
                 SET api_base = ?, api_key_encrypted = ?, model_name = ?,
@@ -116,16 +118,17 @@ def save_config(config_name: str, api_base: str, api_key: str,
                 (config_name, api_base, api_key_encrypted, model_name, temperature, max_tokens, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (config_name, api_base, encrypted_key, model_name, temperature, max_tokens, 1 if is_active else 0))
+            config_id = cursor.lastrowid
 
         # 如果设为活跃，取消其他配置的活跃状态
         if is_active:
             cursor.execute("UPDATE llm_configs SET is_active = 0 WHERE config_name != ?", (config_name,))
 
         conn.commit()
-        return True
+        return True, config_id
     except Exception as e:
         print(f"保存配置失败: {e}")
-        return False
+        return False, None
     finally:
         conn.close()
 

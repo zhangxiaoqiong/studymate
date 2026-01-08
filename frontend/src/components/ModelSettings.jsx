@@ -56,8 +56,9 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
             const backendConfigs = {}
             data.configs.forEach(config => {
               const configKey = config.config_name
-              console.log('  处理配置:', { configKey, modelName: config.model_name })
+              console.log('  处理配置:', { configKey, modelName: config.model_name, configId: config.id })
               backendConfigs[configKey] = {
+                id: config.id,  // 保存配置 ID，用于后续的配置切换
                 apiBase: config.api_base,
                 modelName: config.model_name,
                 temperature: config.temperature,
@@ -240,9 +241,10 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
         }).catch(err => console.error('删除旧配置失败:', err))
       }
 
-      // 保存到本地 localStorage（不保存 API Key）
+      // 保存到本地 localStorage（不保存 API Key，但要保存配置 ID）
       const savedConfigs = JSON.parse(localStorage.getItem('llmConfigurations') || '{}')
       savedConfigs[configName] = {
+        id: result.configId,  // 保存后端返回的配置 ID
         apiBase,
         modelName,
         temperature,
