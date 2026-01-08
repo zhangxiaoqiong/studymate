@@ -259,7 +259,6 @@ async def upload_file(file: UploadFile = File(...)):
 # ========== 配置管理 ==========
 
 from services.db import init_db, get_active_config, get_all_configs, save_config, activate_config, activate_config_by_id, delete_config, get_decrypted_config, get_config_by_name
-from services.crypto import mask_api_key
 
 # 初始化数据库
 init_db()
