@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import ModelSettings from './ModelSettings'
+import LLMConfigManager from './LLMConfigManager'
 
 const SettingsMenu = ({ onClose, activeTab, onTabChange }) => {
   const tabs = [
@@ -54,7 +54,7 @@ const SettingsMenu = ({ onClose, activeTab, onTabChange }) => {
 
           {/* 内容区域 */}
           <div className="flex-1 overflow-y-auto">
-            {activeTab === 'llm' && <ModelSettings onClose={onClose} isInMenu={true} />}
+            {activeTab === 'llm' && <LLMConfigManager onClose={onClose} isInMenu={true} />}
             {activeTab === null && (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <p>请选择一个设置项</p>

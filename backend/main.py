@@ -7,6 +7,8 @@ import os
 from dotenv import load_dotenv
 import tempfile
 from pathlib import Path
+import httpx
+import asyncio
 
 load_dotenv()
 
@@ -75,6 +77,11 @@ class LLMConfigResponse(BaseModel):
     modelName: str
     temperature: float
     maxTokens: int
+
+class TestLLMConfigRequest(BaseModel):
+    apiBase: str
+    modelName: str
+    apiKey: str
 
 # ========== Routes ==========
 
@@ -490,6 +497,62 @@ def get_current_llm_config():
     """获取当前的大模型配置（内部使用）"""
     global llm_config
     return llm_config
+
+
+@app.post("/test_llm_config")
+async def test_llm_config(request: TestLLMConfigRequest):
+    """测试 LLM 配置是否可用（发送测试消息）"""
+    try:
+        headers = {
+            "Authorization": f"Bearer {request.apiKey}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": request.modelName,
+            "messages": [{"role": "user", "content": "test"}],
+            "max_tokens": 10
+        }
+
+        api_url = f"{request.apiBase.rstrip('/')}/chat/completions"
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                api_url,
+                json=payload,
+                headers=headers
+            )
+
+            if response.status_code == 200:
+                return {
+                    "success": True,
+                    "message": "✅ 连接成功，API 密钥有效"
+                }
+            else:
+                error_detail = "API 返回错误"
+                try:
+                    error_data = response.json()
+                    if "error" in error_data:
+                        error_detail = error_data["error"].get("message", str(error_data))
+                    else:
+                        error_detail = str(error_data)
+                except:
+                    error_detail = response.text[:200]
+
+                return {
+                    "success": False,
+                    "message": f"❌ API 错误 ({response.status_code}): {error_detail}"
+                }
+    except asyncio.TimeoutError:
+        return {
+            "success": False,
+            "message": "❌ 连接超时（15秒），请检查 API 地址是否正确"
+        }
+    except Exception as e:
+        error_msg = str(e)
+        return {
+            "success": False,
+            "message": f"❌ 连接失败: {error_msg}"
+        }
 
 if __name__ == "__main__":
     import uvicorn

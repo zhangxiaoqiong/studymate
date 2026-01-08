@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import ModelSettings from './ModelSettings'
 import SettingsMenu from './SettingsMenu'
 
 const DocumentHistory = ({ documents, activeDocId, onSelectDoc, onNewDoc, onDeleteDoc }) => {
