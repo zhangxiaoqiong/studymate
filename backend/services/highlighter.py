@@ -15,7 +15,7 @@ class KeywordHighlighter:
 
         Args:
             text: 原文本内容
-            keywords: 关键词列表，每项包含 keyword、snippet、category 字段
+            keywords: 关键词列表，每项包含 keyword 字段
 
         Returns:
             list: 高亮数据，格式为 [{"keyword": "...", "start": 0, "end": 10}, ...]
@@ -23,40 +23,20 @@ class KeywordHighlighter:
         spans = []
         found_keywords = set()  # 已经找到的关键词
 
-        # 按 snippet 长度倒序排列（优先使用更具体的 snippet）
+        # 按关键词长度倒序排列（优先匹配较长的关键词，避免被短词覆盖）
         sorted_keywords = sorted(
             keywords,
-            key=lambda kw: len(kw.get("snippet", "")),
+            key=lambda kw: len(kw.get("keyword", "")),
             reverse=True
         )
 
         for kw_item in sorted_keywords:
             keyword = kw_item.get("keyword", "").strip()
-            snippet = kw_item.get("snippet", "").strip()
 
             if not keyword or keyword in found_keywords:
                 continue
 
-            # 首先尝试在 snippet 中定位关键词
-            if snippet and snippet in text:
-                # 在 snippet 出现的位置中找到关键词
-                snippet_pos = text.find(snippet)
-                if snippet_pos != -1:
-                    # 在 snippet 内查找关键词的位置
-                    keyword_pos_in_snippet = snippet.find(keyword)
-                    if keyword_pos_in_snippet != -1:
-                        # 计算在原文中的绝对位置
-                        start = snippet_pos + keyword_pos_in_snippet
-                        end = start + len(keyword)
-                        spans.append({
-                            "keyword": keyword,
-                            "start": start,
-                            "end": end
-                        })
-                        found_keywords.add(keyword)
-                        continue
-
-            # 如果 snippet 不在文本中，直接在文本中查找关键词
+            # 在文本中查找关键词
             # 使用正则查找所有位置
             pattern = re.escape(keyword)
             matches = list(re.finditer(pattern, text))
@@ -75,3 +55,4 @@ class KeywordHighlighter:
         spans.sort(key=lambda x: x["start"])
 
         return spans
+
