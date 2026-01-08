@@ -51,7 +51,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
 
   const loadConfigs = async () => {
     try {
-      const response = await fetch('/user_config')
+      const response = await fetch('/api/user_config')
       if (response.ok) {
         const data = await response.json()
         setConfigs(data.configs || [])
@@ -95,7 +95,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
 
   const handleEdit = async (config) => {
     try {
-      const response = await fetch(`/llm_config/${encodeURIComponent(config.config_name)}`)
+      const response = await fetch(`/api/llm_config/${encodeURIComponent(config.config_name)}`)
       if (!response.ok) {
         throw new Error('获取配置失败')
       }
@@ -131,7 +131,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     setError(null)
 
     try {
-      const response = await fetch('/llm_config', {
+      const response = await fetch('/api/llm_config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,7 +168,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     }
 
     try {
-      const response = await fetch(`/llm_config/${encodeURIComponent(config.config_name)}`, {
+      const response = await fetch(`/api/llm_config/${encodeURIComponent(config.config_name)}`, {
         method: 'DELETE',
       })
 
@@ -193,7 +193,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
 
     setLoading(true)
     try {
-      const response = await fetch(`/activate_config/${encodeURIComponent(config.config_name)}`, {
+      const response = await fetch(`/api/activate_config/${encodeURIComponent(config.config_name)}`, {
         method: 'POST',
       })
 
@@ -221,7 +221,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     setTestResult(null)
 
     try {
-      const response = await fetch('/test_llm_config', {
+      const response = await fetch('/api/test_llm_config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
