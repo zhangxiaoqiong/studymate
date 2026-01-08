@@ -201,23 +201,28 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   }
 
   const handleSwitch = async (config) => {
-    console.log('切换配置:', config.config_name, config.id)
+    console.log('切换配置:', config.config_name, 'ID:', config.id)
     if (activeConfigId === config.id) {
       console.log('配置已激活，跳过')
       return
     }
 
     setLoading(true)
+    setError(null)
     try {
-      const url = `/api/activate_config/${encodeURIComponent(config.config_name)}`
+      const url = `/api/activate_config_by_id/${config.id}`
       console.log('发送激活请求:', url)
       const response = await fetch(url, {
         method: 'POST',
       })
 
+      console.log('响应状态:', response.status)
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || '切换失败')
+        const errorMsg = errorData.detail || `HTTP ${response.status}`
+        console.error('切换失败:', errorMsg)
+        throw new Error(errorMsg)
       }
 
       console.log('切换成功，重新加载配置')
@@ -225,8 +230,10 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
-      console.error('切换失败:', err)
-      alert('切换失败: ' + err.message)
+      console.error('切换异常:', err)
+      const errorMsg = err.message || '切换失败'
+      setError(errorMsg)
+      alert('切换失败: ' + errorMsg)
     } finally {
       setLoading(false)
     }
