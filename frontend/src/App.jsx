@@ -350,12 +350,7 @@ function App() {
           </button>
         )}
 
-        {documents.length === 0 && !documentData ? (
-          // 首页：新用户，没有任何文档
-          <div className="flex items-center justify-center h-full py-12 px-4">
-            <DocumentUpload onUpload={handleDocumentUpload} />
-          </div>
-        ) : documentData ? (
+        {documentData ? (
           // 正在查看文档
           <div className="flex h-full overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -389,8 +384,6 @@ function App() {
                 width={256}
               />
             )}
-
-            {/* 右侧已保存列表 + 解释栏 */}
 
             {/* 右侧解释栏 */}
             {selectedKeyword && (
@@ -427,15 +420,9 @@ function App() {
             )}
           </div>
         ) : (
-          // 新对话页面：有历史但当前没有打开文档
+          // 对话页面：没有打开文档时显示上传界面
           <div className="flex items-center justify-center h-full py-12 px-4">
-            <div className="w-full max-w-2xl">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">开始新的探索</h2>
-                <p className="text-gray-600">输入或粘贴新的文本内容来开始分析</p>
-              </div>
-              <DocumentUpload onUpload={handleDocumentUpload} />
-            </div>
+            <DocumentUpload onUpload={handleDocumentUpload} />
           </div>
         )}
       </div>
