@@ -30,16 +30,8 @@ function App() {
       try {
         const history = JSON.parse(savedHistory)
         setDocuments(history)
-
-        // 恢复当前打开的文档
-        const savedActiveId = localStorage.getItem('activeDocId')
-        if (savedActiveId && history.length > 0) {
-          const activeDoc = history.find((doc) => doc.id === savedActiveId)
-          if (activeDoc) {
-            setDocumentData(activeDoc)
-            setActiveDocId(activeDoc.id)
-          }
-        }
+        // 注意：启动时不自动打开文档，始终显示对话页
+        // 用户需要从历史列表中主动选择文档
       } catch (e) {
         console.error('Failed to restore history:', e)
       }
