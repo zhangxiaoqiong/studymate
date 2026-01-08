@@ -92,7 +92,7 @@ const DocumentUpload = ({ onUpload }) => {
         {/* 标题 */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            📖 文档探索器
+            📖 StudyMate
           </h1>
           <p className="text-gray-600 text-lg">
             上传或粘贴文本，AI 将自动提取关键知识点供你深入探索
