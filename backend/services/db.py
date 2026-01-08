@@ -148,6 +148,24 @@ def activate_config(config_name: str) -> bool:
         conn.close()
 
 
+def activate_config_by_id(config_id: int) -> bool:
+    """按 ID 激活配置（更可靠）"""
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("UPDATE llm_configs SET is_active = 0")
+        cursor.execute("UPDATE llm_configs SET is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (config_id,))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"激活配置失败: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 def delete_config(config_name: str) -> bool:
     """删除配置"""
     init_db()

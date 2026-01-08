@@ -25,6 +25,11 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
         const savedConfigs = localStorage.getItem('llmConfigurations')
         const savedSelected = localStorage.getItem('selectedLLMConfig')
 
+        console.log('从 localStorage 加载:', {
+          savedConfigs: savedConfigs ? JSON.parse(savedConfigs) : null,
+          savedSelected
+        })
+
         if (savedConfigs) {
           const configs = JSON.parse(savedConfigs)
           setConfigurations(configs)
@@ -44,25 +49,30 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
         const response = await fetch('/user_config')
         if (response.ok) {
           const data = await response.json()
-          console.log('从后端同步配置列表:', data)
+          console.log('从后端同步的配置:', data)
 
           if (data.configs && Array.isArray(data.configs)) {
             // 转换后端返回的配置列表格式为前端需要的格式
             const backendConfigs = {}
             data.configs.forEach(config => {
-              backendConfigs[config.config_name] = {
+              const configKey = config.config_name
+              console.log('  处理配置:', { configKey, modelName: config.model_name })
+              backendConfigs[configKey] = {
                 apiBase: config.api_base,
                 modelName: config.model_name,
                 temperature: config.temperature,
                 maxTokens: config.max_tokens,
               }
             })
+            console.log('转换后的配置列表:', backendConfigs)
             // 检查 localStorage 中的配置是否在后端存在
             // 如果不存在，从 localStorage 移除
             const cleanedConfigs = { ...backendConfigs }
             localStorage.setItem('llmConfigurations', JSON.stringify(cleanedConfigs))
             setConfigurations(cleanedConfigs)
           }
+        } else {
+          console.warn('获取后端配置失败，状态码:', response.status)
         }
       } catch (error) {
         console.warn('加载配置时出错:', error)
@@ -177,6 +187,7 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
     }
 
     console.log('配置名称:', configName)
+    console.log('后端会使用这个名称保存和查询配置')
 
     setSaving(true)
     try {
@@ -278,13 +289,21 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
     const config = configurations[configName]
     if (!config) return
 
+    // 从配置对象中获取 ID（如果有的话）
+    const configId = config.id
+    if (!configId) {
+      console.warn('配置没有 ID，无法切换')
+      alert('配置不完整，无法切换。请重新保存该配置。')
+      return
+    }
+
     setSaving(true)
     try {
-      console.log('开始切换配置:', configName)
+      console.log('开始切换配置:', { configName, configId })
       console.log('前端保存的配置信息:', config)
 
-      // 切换配置（不需要发送 API Key，后端从数据库加载）
-      const response = await fetch(`/api/activate_config/${encodeURIComponent(configName)}`, {
+      // 切换配置 - 使用 ID（更可靠）
+      const response = await fetch(`/api/activate_config_by_id/${configId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -304,10 +323,10 @@ const ModelSettings = ({ onClose, isInMenu = false }) => {
           errorDetail = `HTTP ${response.status}: ${response.statusText}`
         }
 
-        // 如果是 404，说明后端找不到配置，可能是名称不匹配
+        // 如果是 404，说明后端找不到配置
         if (response.status === 404) {
-          console.error('配置在后端数据库中不存在，可能是名称不匹配')
-          errorDetail = errorDetail + ' - 配置在服务器中不存在，请重新保存'
+          console.error('配置 ID 在后端不存在')
+          errorDetail = errorDetail + ' - 请重新保存该配置'
         }
 
         throw new Error(errorDetail)

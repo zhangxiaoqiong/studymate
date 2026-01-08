@@ -227,7 +227,7 @@ async def upload_file(file: UploadFile = File(...)):
 
 # ========== 配置管理 ==========
 
-from services.db import init_db, get_active_config, get_all_configs, save_config, activate_config, delete_config, get_decrypted_config, get_config_by_name
+from services.db import init_db, get_active_config, get_all_configs, save_config, activate_config, activate_config_by_id, delete_config, get_decrypted_config, get_config_by_name
 from services.crypto import mask_api_key
 
 # 初始化数据库
@@ -304,6 +304,10 @@ async def set_user_config(config: UserConfigRequest):
 async def get_user_config():
     """获取所有用户配置（不含 API Key）"""
     configs = get_all_configs()
+    print(f"API配置: 返回所有配置，共 {len(configs)} 个")
+    if configs:
+        for config in configs:
+            print(f"  - {config.get('config_name')}: {config.get('model_name')}")
     return {
         "configs": configs,
     }
@@ -429,6 +433,30 @@ async def activate_config_endpoint(config_name: str):
 
     return {
         "message": f"已激活配置: {config_name}",
+    }
+
+
+@app.post("/activate_config_by_id/{config_id}")
+async def activate_config_by_id_endpoint(config_id: int):
+    """按 ID 激活一个配置（推荐，更可靠）"""
+    print(f"API配置: 收到激活请求，配置ID={config_id}")
+
+    success = activate_config_by_id(config_id)
+
+    if not success:
+        print(f"API配置: 激活失败")
+        raise HTTPException(status_code=404, detail=f"配置 ID {config_id} 不存在或激活失败")
+
+    print(f"API配置: 激活成功，更新全局配置...")
+
+    # 更新全局配置
+    global llm_config
+    llm_config = get_current_config()
+
+    print(f"API配置: 返回成功响应")
+
+    return {
+        "message": f"已激活配置: ID {config_id}",
     }
 
 
