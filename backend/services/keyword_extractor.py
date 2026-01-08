@@ -1,3 +1,8 @@
+"""
+关键词提取服务
+
+使用大模型智能提取文本中的关键词、专业术语和核心知识点。
+"""
 import json
 import os
 from typing import List, Dict
@@ -12,19 +17,19 @@ class KeywordExtractor:
     def __init__(self, config=None):
         """
         初始化关键词提取器
+
         Args:
             config: 包含 apiKey, apiBase, modelName 等的配置字典
         """
-        # 从 config 中获取 API Key（此时已从数据库解密）
         api_key = None
         if config:
             api_key = config.get("apiKey")
-        
-        # 如果config中没有或为空，从环境变量读取
+
+        # 如果配置中没有 API Key，从环境变量读取
         if not api_key:
             api_key = os.getenv("DEEPSEEK_API_KEY")
 
-        # 其他配置参数
+        # 获取其他配置参数
         if config:
             api_base = config.get("apiBase", "https://api.deepseek.com/v1")
             self.model = config.get("modelName", "deepseek-chat")
@@ -40,8 +45,13 @@ class KeywordExtractor:
 
     async def extract(self, text: str) -> List[Dict]:
         """
-        提取文本中的关键概念
-        返回格式: [{"keyword": "...", "snippet": "...", "category": "..."}, ...]
+        提取文本中的关键概念和专业术语
+
+        Args:
+            text: 要分析的文本内容
+
+        Returns:
+            list: 关键词列表，每项包含 keyword、snippet、category 字段
         """
         prompt = f"""你是一个专业的助教。请阅读以下文本，提取出其中所有的专业术语、关键概念或核心知识点。
 
@@ -83,7 +93,7 @@ class KeywordExtractor:
                 content = data["choices"][0]["message"]["content"].strip()
                 keywords = json.loads(content)
 
-                # 去重：按keyword去重，保留第一个
+                # 去重：按 keyword 去重，保留第一个出现的
                 seen = set()
                 unique_keywords = []
                 for kw in keywords:
@@ -94,9 +104,9 @@ class KeywordExtractor:
                 return unique_keywords
 
         except json.JSONDecodeError as e:
-            print(f"JSON解析错误: {e}")
-            print(f"API返回内容: {content if 'content' in locals() else 'N/A'}")
+            print(f"JSON 解析错误: {e}")
+            print(f"API 返回内容: {content if 'content' in locals() else 'N/A'}")
             return []
         except Exception as e:
-            print(f"API调用错误: {e}")
+            print(f"API 调用错误: {e}")
             return []

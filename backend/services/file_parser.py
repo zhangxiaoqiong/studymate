@@ -1,17 +1,39 @@
+"""
+文件解析服务
+
+支持多种文件格式的文本提取：
+- .txt：纯文本文件（支持 UTF-8 和 GBK 编码）
+- .md：Markdown 文件
+- .pdf：PDF 文件（使用 pdfplumber）
+- .docx/.doc：Word 文档（使用 python-docx）
+
+限制：
+- 最大文件大小：5MB
+- 支持的格式：txt, pdf, docx, doc, md
+"""
 import pdfplumber
 from docx import Document
 from pathlib import Path
 from typing import Tuple
 
 class FileParser:
-    """文件解析器，支持 .txt, .pdf, .docx, .md 格式"""
+    """文件解析器，支持 .txt, .pdf, .docx, .md 等多种格式"""
 
     MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
     SUPPORTED_FORMATS = {'.txt', '.pdf', '.docx', '.doc', '.md'}
 
     @staticmethod
     def validate_file(file_path: str, file_size: int) -> Tuple[bool, str]:
-        """验证文件格式和大小"""
+        """
+        验证文件格式和大小
+
+        Args:
+            file_path: 文件路径
+            file_size: 文件大小（字节）
+
+        Returns:
+            tuple: (是否有效, 错误信息)
+        """
         path = Path(file_path)
         suffix = path.suffix.lower()
 
@@ -25,7 +47,15 @@ class FileParser:
 
     @staticmethod
     def parse_txt(file_path: str) -> str:
-        """解析纯文本文件"""
+        """
+        解析纯文本文件，自动尝试 UTF-8 和 GBK 编码
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            str: 文件内容
+        """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -38,7 +68,18 @@ class FileParser:
 
     @staticmethod
     def parse_pdf(file_path: str) -> str:
-        """解析 PDF 文件"""
+        """
+        解析 PDF 文件，提取所有页面的文本
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            str: 合并后的文本内容
+
+        Raises:
+            ValueError: 如果 PDF 解析失败
+        """
         text = []
         try:
             with pdfplumber.open(file_path) as pdf:
@@ -52,15 +93,27 @@ class FileParser:
 
     @staticmethod
     def parse_docx(file_path: str) -> str:
-        """解析 DOCX 文件"""
+        """
+        解析 DOCX 文件，提取段落和表格内容
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            str: 提取的文本内容
+
+        Raises:
+            ValueError: 如果 DOCX 解析失败
+        """
         text = []
         try:
             doc = Document(file_path)
+            # 提取段落
             for paragraph in doc.paragraphs:
                 if paragraph.text.strip():
                     text.append(paragraph.text)
 
-            # 处理表格
+            # 提取表格
             for table in doc.tables:
                 for row in table.rows:
                     row_text = '\t'.join(cell.text for cell in row.cells)
@@ -80,10 +133,10 @@ class FileParser:
             file_path: 文件路径
 
         Returns:
-            提取的文本内容
+            str: 提取的文本内容
 
         Raises:
-            ValueError: 如果解析失败
+            ValueError: 如果文件格式不支持或解析失败
         """
         path = Path(file_path)
         suffix = path.suffix.lower()

@@ -1,3 +1,27 @@
+"""
+StudyMate Backend API - Doc Explorer
+
+主要功能：
+1. 文档管理：上传、解析文本和文件
+2. 关键词提取：使用 LLM 智能提取文档关键词
+3. 解释生成：为关键词生成详细解释（流式或非流式）
+4. 大模型配置：支持多个 LLM 配置（DeepSeek、OpenAI 等），持久化存储
+5. API 测试：测试 LLM 配置是否可用
+
+架构：
+- FastAPI 框架
+- SQLite 数据库（LLM 配置）
+- 加密存储敏感信息（API Key）
+- 异步操作支持（async/await）
+
+环境变量：
+- API_BASE_URL: LLM API 基础 URL（默认 DeepSeek）
+- DEEPSEEK_API_KEY: LLM API 密钥
+- LLM_MODEL: 模型名称
+- LLM_TEMPERATURE: 温度参数
+- LLM_MAX_TOKENS: 最大令牌数
+"""
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -311,10 +335,6 @@ async def set_user_config(config: UserConfigRequest):
 async def get_user_config():
     """获取所有用户配置（不含 API Key）"""
     configs = get_all_configs()
-    print(f"API配置: 返回所有配置，共 {len(configs)} 个")
-    if configs:
-        for config in configs:
-            print(f"  - {config.get('config_name')}: {config.get('model_name')}")
     return {
         "configs": configs,
     }
@@ -357,37 +377,31 @@ async def get_llm_config_by_id(config_id: int):
 
 @app.post("/llm_config")
 async def set_llm_config(config: LLMConfigRequest):
-    """保存完整的 LLM 配置（包含 API Key，加密存储）"""
-    try:
-        print(f"API配置: 收到保存请求，配置名称='{config.configName}', 编辑名称='{config.editingConfigName}'")
+    """保存完整的 LLM 配置（包含 API Key，加密存储）
 
-        # 如果是编辑现有配置且没有提供 API Key，则使用现有的
+    处理新建和编辑两种模式：
+    - 新建：API Key 必须提供，自动激活
+    - 编辑：API Key 可选（为空时使用现有的），保持原激活状态
+    """
+    try:
+        # 确定 API Key（新建必须提供，编辑可使用现有）
         api_key = config.apiKey
         if config.editingConfigName and not api_key:
-            print(f"API配置: 编辑模式，尝试获取原有的 API Key...")
-            # 获取现有配置的 API Key
+            # 编辑模式下如果未提供 API Key，使用现有的
             existing = get_decrypted_config(config.editingConfigName)
             if existing:
                 api_key = existing.get('api_key')
-                print(f"API配置: 获取到原有 API Key")
             if not api_key:
-                print(f"API配置: 无法找到原有 API Key")
                 raise HTTPException(status_code=400, detail="无法找到原有 API Key，请提供新的 API Key")
 
         if not api_key:
-            print(f"API配置: API Key 为空")
             raise HTTPException(status_code=400, detail="API Key 不能为空")
 
-        print(f"API配置: 保存配置 '{config.configName}'...")
+        # 自动激活新配置，编辑时保持原状态
+        is_active = not config.editingConfigName
 
-        # 判断是否需要激活配置
-        # 只有在新建时才自动激活，编辑时保持原有激活状态
-        is_active = not config.editingConfigName  # 新建时为 True，编辑时为 False
-        print(f"API配置: 激活状态={is_active}")
-
-        # 如果在编辑且配置名称改变，需要先删除旧配置
+        # 编辑时如果配置名称改变，需删除旧配置
         if config.editingConfigName and config.editingConfigName != config.configName:
-            print(f"API配置: 删除旧配置 '{config.editingConfigName}'")
             delete_config(config.editingConfigName)
 
         # 保存到数据库（自动加密 API Key）
@@ -402,16 +416,11 @@ async def set_llm_config(config: LLMConfigRequest):
         )
 
         if not success:
-            print(f"API配置: 保存失败")
             raise HTTPException(status_code=400, detail="保存配置失败")
-
-        print(f"API配置: 保存成功，配置ID={config_id}，更新全局配置...")
 
         # 更新全局配置
         global llm_config
         llm_config = get_current_config()
-
-        print(f"API配置: 返回成功响应")
 
         return {
             "message": "配置已更新",
@@ -425,37 +434,23 @@ async def set_llm_config(config: LLMConfigRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"API配置: 异常错误: {e}")
-        import traceback
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
 
 
 @app.post("/activate_config/{config_name}")
 async def activate_config_endpoint(config_name: str):
-    """激活一个配置"""
-    print(f"API配置: 收到激活请求，配置名称='{config_name}'")
-
-    # 检查配置是否存在
+    """激活一个配置（按名称，已弃用，推荐使用按ID的版本）"""
     existing = get_config_by_name(config_name)
     if not existing:
-        print(f"API配置: 配置不存在")
         raise HTTPException(status_code=404, detail=f"配置'{config_name}'不存在")
 
-    print(f"API配置: 激活配置...")
     success = activate_config(config_name)
-
     if not success:
-        print(f"API配置: 激活失败")
         raise HTTPException(status_code=400, detail="激活配置失败")
-
-    print(f"API配置: 激活成功，更新全局配置...")
 
     # 更新全局配置
     global llm_config
     llm_config = get_current_config()
-
-    print(f"API配置: 返回成功响应")
 
     return {
         "message": f"已激活配置: {config_name}",
@@ -464,22 +459,14 @@ async def activate_config_endpoint(config_name: str):
 
 @app.post("/activate_config_by_id/{config_id}")
 async def activate_config_by_id_endpoint(config_id: int):
-    """按 ID 激活一个配置（推荐，更可靠）"""
-    print(f"API配置: 收到激活请求，配置ID={config_id}")
-
+    """按 ID 激活一个配置（推荐方式，避免 URL 编码问题）"""
     success = activate_config_by_id(config_id)
-
     if not success:
-        print(f"API配置: 激活失败")
         raise HTTPException(status_code=404, detail=f"配置 ID {config_id} 不存在或激活失败")
-
-    print(f"API配置: 激活成功，更新全局配置...")
 
     # 更新全局配置
     global llm_config
     llm_config = get_current_config()
-
-    print(f"API配置: 返回成功响应")
 
     return {
         "message": f"已激活配置: ID {config_id}",
@@ -517,60 +504,60 @@ def get_current_llm_config():
     return llm_config
 
 
-@app.post("/test_llm_config")
-async def test_llm_config(request: TestLLMConfigRequest):
-    """测试 LLM 配置是否可用（发送测试消息）"""
+async def _test_llm_api(api_base: str, model_name: str, api_key: str):
+    """
+    测试 LLM API 连接（内部辅助方法）
+
+    Args:
+        api_base: API 基础 URL（如 https://api.deepseek.com/v1）
+        model_name: 模型名称
+        api_key: API 密钥
+
+    Returns:
+        dict: {"success": bool, "message": str}
+    """
     try:
         headers = {
-            "Authorization": f"Bearer {request.apiKey}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
         payload = {
-            "model": request.modelName,
+            "model": model_name,
             "messages": [{"role": "user", "content": "test"}],
             "max_tokens": 10
         }
 
-        api_url = f"{request.apiBase.rstrip('/')}/chat/completions"
+        api_url = f"{api_base.rstrip('/')}/chat/completions"
 
         async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                api_url,
-                json=payload,
-                headers=headers
-            )
+            response = await client.post(api_url, json=payload, headers=headers)
 
             if response.status_code == 200:
-                return {
-                    "success": True,
-                    "message": "✅ 连接成功，API 密钥有效"
-                }
-            else:
-                error_detail = "API 返回错误"
-                try:
-                    error_data = response.json()
-                    if "error" in error_data:
-                        error_detail = error_data["error"].get("message", str(error_data))
-                    else:
-                        error_detail = str(error_data)
-                except:
-                    error_detail = response.text[:200]
+                return {"success": True, "message": "✅ 连接成功，API 密钥有效"}
 
-                return {
-                    "success": False,
-                    "message": f"❌ API 错误 ({response.status_code}): {error_detail}"
-                }
+            # 解析错误信息
+            error_detail = "API 返回错误"
+            try:
+                error_data = response.json()
+                if "error" in error_data:
+                    error_detail = error_data["error"].get("message", str(error_data))
+                else:
+                    error_detail = str(error_data)
+            except:
+                error_detail = response.text[:200]
+
+            return {"success": False, "message": f"❌ API 错误 ({response.status_code}): {error_detail}"}
+
     except asyncio.TimeoutError:
-        return {
-            "success": False,
-            "message": "❌ 连接超时（15秒），请检查 API 地址是否正确"
-        }
+        return {"success": False, "message": "❌ 连接超时（15秒），请检查 API 地址是否正确"}
     except Exception as e:
-        error_msg = str(e)
-        return {
-            "success": False,
-            "message": f"❌ 连接失败: {error_msg}"
-        }
+        return {"success": False, "message": f"❌ 连接失败: {str(e)}"}
+
+
+@app.post("/test_llm_config")
+async def test_llm_config(request: TestLLMConfigRequest):
+    """测试 LLM 配置是否可用（使用前端提供的 API Key）"""
+    return await _test_llm_api(request.apiBase, request.modelName, request.apiKey)
 
 
 @app.post("/test_existing_llm_config/{config_id}")
@@ -578,74 +565,20 @@ async def test_existing_llm_config(config_id: int):
     """测试现有配置的 API Key（编辑时使用，不需要前端提供 API Key）"""
     from services.db import get_config_by_id
 
-    try:
-        # 获取配置
-        config = get_config_by_id(config_id)
-        if not config:
-            return {
-                "success": False,
-                "message": "❌ 配置不存在"
-            }
+    config = get_config_by_id(config_id)
+    if not config:
+        return {"success": False, "message": "❌ 配置不存在"}
 
-        # 解密 API Key
-        decrypted = get_decrypted_config(config['config_name'])
-        if not decrypted or not decrypted.get('api_key'):
-            return {
-                "success": False,
-                "message": "❌ 无法获取 API Key"
-            }
+    # 解密 API Key
+    decrypted = get_decrypted_config(config['config_name'])
+    if not decrypted or not decrypted.get('api_key'):
+        return {"success": False, "message": "❌ 无法获取 API Key"}
 
-        # 构建请求
-        headers = {
-            "Authorization": f"Bearer {decrypted['api_key']}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": config.get('model_name'),
-            "messages": [{"role": "user", "content": "test"}],
-            "max_tokens": 10
-        }
-
-        api_url = f"{config.get('api_base', '').rstrip('/')}/chat/completions"
-
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                api_url,
-                json=payload,
-                headers=headers
-            )
-
-            if response.status_code == 200:
-                return {
-                    "success": True,
-                    "message": "✅ 连接成功，API 密钥有效"
-                }
-            else:
-                error_detail = "API 返回错误"
-                try:
-                    error_data = response.json()
-                    if "error" in error_data:
-                        error_detail = error_data["error"].get("message", str(error_data))
-                    else:
-                        error_detail = str(error_data)
-                except:
-                    error_detail = response.text[:200]
-
-                return {
-                    "success": False,
-                    "message": f"❌ API 错误 ({response.status_code}): {error_detail}"
-                }
-    except asyncio.TimeoutError:
-        return {
-            "success": False,
-            "message": "❌ 连接超时（15秒），请检查 API 地址是否正确"
-        }
-    except Exception as e:
-        error_msg = str(e)
-        return {
-            "success": False,
-            "message": f"❌ 连接失败: {error_msg}"
-        }
+    return await _test_llm_api(
+        config.get('api_base', ''),
+        config.get('model_name'),
+        decrypted['api_key']
+    )
 
 if __name__ == "__main__":
     import uvicorn

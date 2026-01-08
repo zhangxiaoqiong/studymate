@@ -1,3 +1,11 @@
+"""
+关键词解释服务
+
+使用大模型为给定的关键词生成详细、易懂的解释，支持：
+- 普通解释（非流式）
+- 流式解释（实时返回）
+- 后续问答（基于已有解释回答用户问题）
+"""
 import os
 import httpx
 import json
@@ -9,14 +17,21 @@ class KeywordExplainer:
     """使用大模型生成关键词的详细解释"""
 
     def __init__(self, config=None):
-        """初始化关键词解释器"""
+        """
+        初始化关键词解释器
+
+        Args:
+            config: 包含 apiKey, apiBase, modelName, temperature, maxTokens 等的配置字典
+        """
         api_key = None
         if config:
             api_key = config.get("apiKey")
-        
+
+        # 如果配置中没有 API Key，从环境变量读取
         if not api_key:
             api_key = os.getenv("DEEPSEEK_API_KEY")
 
+        # 获取其他配置参数
         if config:
             api_base = config.get("apiBase", "https://api.deepseek.com/v1")
             self.model = config.get("modelName", "deepseek-chat")
@@ -35,7 +50,16 @@ class KeywordExplainer:
         self.api_base = api_base
 
     async def explain(self, keyword: str, context: str = "") -> str:
-        """生成关键词的详细解释（非流式）"""
+        """
+        生成关键词的详细解释（非流式）
+
+        Args:
+            keyword: 要解释的关键词
+            context: 额外上下文信息（可选）
+
+        Returns:
+            str: 详细的解释文本
+        """
         context_part = f"\n额外上下文：{context}" if context else ""
         prompt = f"""你是一个耐心的老师。请用通俗易懂的语言解释以下概念，并举一个实际例子。
 
@@ -69,11 +93,20 @@ class KeywordExplainer:
                 return explanation
 
         except Exception as e:
-            print(f"API调用错误: {e}")
+            print(f"API 调用错误: {e}")
             return f"无法生成'{keyword}'的解释，请稍后重试。"
 
     async def explain_stream(self, keyword: str, context: str = ""):
-        """生成关键词的详细解释（流式）"""
+        """
+        生成关键词的详细解释（流式）
+
+        Args:
+            keyword: 要解释的关键词
+            context: 额外上下文信息（可选）
+
+        Yields:
+            str: 解释文本的流式块
+        """
         context_part = f"\n额外上下文：{context}" if context else ""
         prompt = f"""你是一个耐心的老师。请用通俗易懂的语言解释以下概念，并举一个实际例子。
 
@@ -119,11 +152,21 @@ class KeywordExplainer:
                                 continue
 
         except Exception as e:
-            print(f"API流式调用错误: {e}")
+            print(f"API 流式调用错误: {e}")
             yield f"无法生成'{keyword}'的解释，请稍后重试。"
 
     async def answer_followup(self, keyword: str, explanation: str, question: str) -> str:
-        """对已有的解释进行后续提问（非流式）"""
+        """
+        对已有的解释进行后续提问（非流式）
+
+        Args:
+            keyword: 原始关键词
+            explanation: 之前的详细解释
+            question: 用户的后续问题
+
+        Returns:
+            str: 回答文本
+        """
         prompt = f"""你是一个耐心的老师。用户就之前的解释有一个后续问题。
 
 原始概念：{keyword}
@@ -157,11 +200,21 @@ class KeywordExplainer:
                 return answer
 
         except Exception as e:
-            print(f"API调用错误: {e}")
+            print(f"API 调用错误: {e}")
             return f"无法回答你的问题，请稍后重试。"
 
     async def answer_followup_stream(self, keyword: str, explanation: str, question: str):
-        """对已有的解释进行后续提问（流式）"""
+        """
+        对已有的解释进行后续提问（流式）
+
+        Args:
+            keyword: 原始关键词
+            explanation: 之前的详细解释
+            question: 用户的后续问题
+
+        Yields:
+            str: 回答文本的流式块
+        """
         prompt = f"""你是一个耐心的老师。用户就之前的解释有一个后续问题。
 
 原始概念：{keyword}
@@ -207,5 +260,5 @@ class KeywordExplainer:
                                 continue
 
         except Exception as e:
-            print(f"API流式调用错误: {e}")
+            print(f"API 流式调用错误: {e}")
             yield f"无法回答你的问题，请稍后重试。"
