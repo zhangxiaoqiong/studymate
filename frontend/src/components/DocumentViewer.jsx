@@ -138,30 +138,36 @@ const DocumentViewer = ({
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col bg-white">
-      <div className="px-8 py-2 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">📖 {title || '学习文档'}</h1>
-        <button onClick={onStartEdit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm">✎ 编辑</button>
+      {/* 紧凑的头部 */}
+      <div className="px-6 py-3 bg-white shadow-xs border-b border-gray-200">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 truncate py-3">📖 {title || 'StudyMate'}</h1>
+            <div className="flex gap-4 text-xs text-gray-500 mt-0.5">
+              <span><span className="font-semibold text-gray-700">{text.length}</span> 字符</span>
+              <span><span className="font-semibold text-gray-700">{text.split('\n').length}</span> 段落</span>
+              <span><span className="font-semibold text-gray-700">{spans?.length || 0}</span> 关键词</span>
+            </div>
+          </div>
+          <button onClick={onStartEdit} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm flex-shrink-0">✎ 编辑</button>
+        </div>
       </div>
 
-      <div className="px-8 py-1.5 bg-gray-50 border-b border-gray-200 flex gap-6 text-sm text-gray-600">
-        <div><span className="font-semibold text-gray-900">{text.length}</span> 字符</div>
-        <div><span className="font-semibold text-gray-900">{text.split('\n').length}</span> 段落</div>
-        <div><span className="font-semibold text-gray-900">{spans?.length || 0}</span> 关键词</div>
-      </div>
-
+      {/* 内容区域 - 更紧凑 */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white via-white to-gray-50">
-        <div className="px-6 py-6 max-w-6xl">
+        <div className="px-5 py-4 max-w-5xl">
           <div className="markdown-content">
-            <div className="text-base leading-8 text-gray-800 whitespace-pre-wrap break-words">
+            <div className="text-sm leading-7 text-gray-800 whitespace-pre-wrap break-words">
               {renderHighlightedText()}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-8 py-3 bg-amber-50 border-t border-amber-200 text-sm text-amber-700 flex items-center gap-2">
+      {/* 底部提示 - 更紧凑 */}
+      <div className="px-6 py-2 bg-amber-50 border-t border-amber-200 text-xs text-amber-700 flex items-center gap-2">
         <span>💡</span>
-        <span>点击任何 <span className="highlight">高亮的关键词</span> 查看详细解释</span>
+        <span>点击 <span className="highlight">高亮词</span> 查看详解</span>
       </div>
     </div>
   )

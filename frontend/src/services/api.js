@@ -1,5 +1,6 @@
 import axios from 'axios'
 
+// 使用 '/api' 来利用 Vite 的代理功能，在生产环境中设置正确的 URL
 const API_BASE_URL = '/api'
 
 export const api = axios.create({

@@ -305,7 +305,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
       {/* 左侧历史栏（可隐藏） */}
-      {(documentData || documents.length > 0) && showLeftSidebar && (
+      {showLeftSidebar && (
         <div className="relative">
           <DocumentHistory
             documents={documents}
@@ -330,7 +330,7 @@ function App() {
       {/* 主内容区 */}
       <div className="flex-1 flex flex-col h-screen relative">
         {/* 显示左侧栏按钮（当左侧栏隐藏时） */}
-        {(documentData || documents.length > 0) && !showLeftSidebar && (
+        {!showLeftSidebar && (
           <button
             onClick={() => setShowLeftSidebar(true)}
             className="absolute left-0 top-4 bg-gray-800 hover:bg-gray-700 text-white rounded-full p-2 shadow-lg transition-colors z-40"

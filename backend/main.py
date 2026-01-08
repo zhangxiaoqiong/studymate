@@ -339,7 +339,7 @@ async def get_user_config():
     }
 
 
-@app.get("/llm_config/{config_name}")
+@app.get("/llm_config/{config_name:path}")
 async def get_llm_config_detail(config_name: str):
     """获取单个配置的完整信息（包括解密的 API Key）"""
     config = get_decrypted_config(config_name)
@@ -472,7 +472,7 @@ async def activate_config_by_id_endpoint(config_id: int):
     }
 
 
-@app.delete("/llm_config/{config_name}")
+@app.delete("/llm_config/{config_name:path}")
 async def delete_llm_config(config_name: str):
     """删除一个配置"""
     success = delete_config(config_name)
@@ -528,8 +528,21 @@ async def _test_llm_api(api_base: str, model_name: str, api_key: str):
 
         api_url = f"{api_base.rstrip('/')}/chat/completions"
 
+        import sys
+        print(f"[TEST API] URL: {api_url}", flush=True)
+        sys.stdout.flush()
+        print(f"[TEST API] Model: {model_name}", flush=True)
+        sys.stdout.flush()
+        print(f"[TEST API] Headers: {list(headers.keys())}", flush=True)
+        sys.stdout.flush()
+
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(api_url, json=payload, headers=headers)
+
+            print(f"[TEST API] Status Code: {response.status_code}", flush=True)
+            sys.stdout.flush()
+            print(f"[TEST API] Response: {response.text[:500]}", flush=True)
+            sys.stdout.flush()
 
             if response.status_code == 200:
                 return {"success": True, "message": "✅ 连接成功，API 密钥有效"}
@@ -548,9 +561,15 @@ async def _test_llm_api(api_base: str, model_name: str, api_key: str):
             return {"success": False, "message": f"❌ API 错误 ({response.status_code}): {error_detail}"}
 
     except asyncio.TimeoutError:
+        print(f"[TEST API] Timeout error")
         return {"success": False, "message": "❌ 连接超时（15秒），请检查 API 地址是否正确"}
     except Exception as e:
-        return {"success": False, "message": f"❌ 连接失败: {str(e)}"}
+        error_msg = f"{type(e).__name__}: {str(e)}"
+        print(f"[TEST API] Exception: {error_msg}")
+        print(f"[TEST API] Full exception:", e, flush=True)
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": f"❌ 连接失败: {error_msg}"}
 
 
 @app.post("/test_llm_config")

@@ -87,19 +87,19 @@ const DocumentUpload = ({ onUpload }) => {
   const exampleText = `深度学习是机器学习的一个重要分支。它使用多层神经网络来学习数据的表示。卷积神经网络特别适合处理图像数据。循环神经网络则用于序列处理。Transformer 架构通过自注意力机制实现了重大突破。`
 
   return (
-    <div className="w-full max-w-2xl">
-      <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+    <div className="w-full max-w-4xl max-h-screen overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
         {/* 标题 */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1">
             📖 StudyMate
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-base">
             上传或粘贴文本，AI 将自动提取关键知识点供你深入探索
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* 文件上传区域 */}
           <div
             onDragEnter={handleDrag}
@@ -160,7 +160,7 @@ const DocumentUpload = ({ onUpload }) => {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="粘贴你的文本内容... （最少输入 20 个字符）"
-              rows={12}
+              rows={8}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none transition-all font-mono text-sm leading-relaxed"
             />
             <p className="text-xs text-gray-500 mt-2">

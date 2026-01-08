@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
+const API_BASE_URL = '/api'
+
 const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   // 表单状态
   const [apiBase, setApiBase] = useState('https://api.deepseek.com/v1')
@@ -52,7 +54,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
 
   const loadConfigs = async () => {
     try {
-      const response = await fetch('/api/user_config')
+      const response = await fetch(`${API_BASE_URL}/user_config`)
       console.log('加载配置响应状态:', response.status)
 
       if (!response.ok) {
@@ -107,7 +109,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   const handleEdit = async (config) => {
     console.log('编辑配置:', config.config_name, 'ID:', config.id)
     try {
-      const url = `/api/llm_config_by_id/${config.id}`
+      const url = `${API_BASE_URL}/llm_config_by_id/${config.id}`
       console.log('获取配置详情:', url)
       const response = await fetch(url)
       if (!response.ok) {
@@ -150,7 +152,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     setError(null)
 
     try {
-      const response = await fetch('/api/llm_config', {
+      const response = await fetch(`${API_BASE_URL}/llm_config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,7 +189,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     }
 
     try {
-      const response = await fetch(`/api/llm_config/${encodeURIComponent(config.config_name)}`, {
+      const response = await fetch(`${API_BASE_URL}/llm_config/${encodeURIComponent(config.config_name)}`, {
         method: 'DELETE',
       })
 
@@ -215,7 +217,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     setLoading(true)
     setError(null)
     try {
-      const url = `/api/activate_config_by_id/${config.id}`
+      const url = `${API_BASE_URL}/activate_config_by_id/${config.id}`
       console.log('发送激活请求:', url)
       const response = await fetch(url, {
         method: 'POST',
@@ -251,7 +253,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
       setTestResult(null)
 
       try {
-        const response = await fetch(`/api/test_existing_llm_config/${editingId}`, {
+        const response = await fetch(`${API_BASE_URL}/test_existing_llm_config/${editingId}`, {
           method: 'POST',
         })
 
@@ -282,7 +284,8 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     setTestResult(null)
 
     try {
-      const response = await fetch('/api/test_llm_config', {
+      console.log('TEST: 发送请求到', `${API_BASE_URL}/test_llm_config`)
+      const response = await fetch(`${API_BASE_URL}/test_llm_config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -292,6 +295,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
         }),
       })
 
+      console.log('TEST: 收到响应', response.status)
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }

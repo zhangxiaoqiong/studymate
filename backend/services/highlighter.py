@@ -20,27 +20,56 @@ class KeywordHighlighter:
         Returns:
             list: 高亮数据，格式为 [{"keyword": "...", "start": 0, "end": 10}, ...]
         """
-        # 按关键词长度倒序排列（长词优先，防止短词嵌套替换）
+        spans = []
+        found_keywords = set()  # 已经找到的关键词
+
+        # 按 snippet 长度倒序排列（优先使用更具体的 snippet）
         sorted_keywords = sorted(
-            [kw["keyword"] for kw in keywords],
-            key=len,
+            keywords,
+            key=lambda kw: len(kw.get("snippet", "")),
             reverse=True
         )
 
-        spans = []
+        for kw_item in sorted_keywords:
+            keyword = kw_item.get("keyword", "").strip()
+            snippet = kw_item.get("snippet", "").strip()
 
-        for keyword in sorted_keywords:
+            if not keyword or keyword in found_keywords:
+                continue
+
+            # 首先尝试在 snippet 中定位关键词
+            if snippet and snippet in text:
+                # 在 snippet 出现的位置中找到关键词
+                snippet_pos = text.find(snippet)
+                if snippet_pos != -1:
+                    # 在 snippet 内查找关键词的位置
+                    keyword_pos_in_snippet = snippet.find(keyword)
+                    if keyword_pos_in_snippet != -1:
+                        # 计算在原文中的绝对位置
+                        start = snippet_pos + keyword_pos_in_snippet
+                        end = start + len(keyword)
+                        spans.append({
+                            "keyword": keyword,
+                            "start": start,
+                            "end": end
+                        })
+                        found_keywords.add(keyword)
+                        continue
+
+            # 如果 snippet 不在文本中，直接在文本中查找关键词
             # 使用正则查找所有位置
-            # re.escape 防止特殊字符的影响
             pattern = re.escape(keyword)
+            matches = list(re.finditer(pattern, text))
 
-            for match in re.finditer(pattern, text):
-                span = {
+            if matches and keyword not in found_keywords:
+                # 只记录第一个匹配位置
+                match = matches[0]
+                spans.append({
                     "keyword": keyword,
                     "start": match.start(),
                     "end": match.end()
-                }
-                spans.append(span)
+                })
+                found_keywords.add(keyword)
 
         # 按 start 位置排序（便于前端渲染）
         spans.sort(key=lambda x: x["start"])

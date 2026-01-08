@@ -89,11 +89,15 @@ class KeywordExplainer:
                 )
                 response.raise_for_status()
                 data = response.json()
-                explanation = data["choices"][0]["message"]["content"].strip()
-                return explanation
+                # 安全地访问 choices
+                if "choices" in data and len(data["choices"]) > 0:
+                    explanation = data["choices"][0]["message"]["content"].strip()
+                    return explanation
+                else:
+                    return f"API 返回格式错误，无法生成'{keyword}'的解释。"
 
         except Exception as e:
-            print(f"API 调用错误: {e}")
+            print(f"API 调用错误: {type(e).__name__}: {e}")
             return f"无法生成'{keyword}'的解释，请稍后重试。"
 
     async def explain_stream(self, keyword: str, context: str = ""):
@@ -143,16 +147,18 @@ class KeywordExplainer:
                                 break
                             try:
                                 chunk = json.loads(data_str)
-                                if chunk and "choices" in chunk:
+                                # 安全地访问 choices 列表
+                                if chunk and "choices" in chunk and len(chunk["choices"]) > 0:
                                     delta = chunk["choices"][0].get("delta", {})
                                     content = delta.get("content", "")
                                     if content:
                                         yield content
-                            except json.JSONDecodeError:
+                            except (json.JSONDecodeError, IndexError, KeyError) as e:
+                                # 跳过格式不正确的行
                                 continue
 
         except Exception as e:
-            print(f"API 流式调用错误: {e}")
+            print(f"API 流式调用错误: {type(e).__name__}: {e}")
             yield f"无法生成'{keyword}'的解释，请稍后重试。"
 
     async def answer_followup(self, keyword: str, explanation: str, question: str) -> str:
@@ -196,11 +202,15 @@ class KeywordExplainer:
                 )
                 response.raise_for_status()
                 data = response.json()
-                answer = data["choices"][0]["message"]["content"].strip()
-                return answer
+                # 安全地访问 choices
+                if "choices" in data and len(data["choices"]) > 0:
+                    answer = data["choices"][0]["message"]["content"].strip()
+                    return answer
+                else:
+                    return "API 返回格式错误，无法生成回答。"
 
         except Exception as e:
-            print(f"API 调用错误: {e}")
+            print(f"API 调用错误: {type(e).__name__}: {e}")
             return f"无法回答你的问题，请稍后重试。"
 
     async def answer_followup_stream(self, keyword: str, explanation: str, question: str):
@@ -251,14 +261,16 @@ class KeywordExplainer:
                                 break
                             try:
                                 chunk = json.loads(data_str)
-                                if chunk and "choices" in chunk:
+                                # 安全地访问 choices 列表
+                                if chunk and "choices" in chunk and len(chunk["choices"]) > 0:
                                     delta = chunk["choices"][0].get("delta", {})
                                     content = delta.get("content", "")
                                     if content:
                                         yield content
-                            except json.JSONDecodeError:
+                            except (json.JSONDecodeError, IndexError, KeyError) as e:
+                                # 跳过格式不正确的行
                                 continue
 
         except Exception as e:
-            print(f"API 流式调用错误: {e}")
+            print(f"API 流式调用错误: {type(e).__name__}: {e}")
             yield f"无法回答你的问题，请稍后重试。"
