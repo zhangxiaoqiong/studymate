@@ -245,6 +245,34 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   }
 
   const handleTestConnection = async () => {
+    // 如果在编辑且勾选了"保持现有 API Key"，使用新的测试端点
+    if (editingId && keepExistingKey) {
+      setTestLoading(true)
+      setTestResult(null)
+
+      try {
+        const response = await fetch(`/api/test_existing_llm_config/${editingId}`, {
+          method: 'POST',
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        setTestResult(data)
+      } catch (err) {
+        setTestResult({
+          success: false,
+          message: '测试失败: ' + err.message,
+        })
+      } finally {
+        setTestLoading(false)
+      }
+      return
+    }
+
+    // 否则，使用前端提供的 API Key 测试
     if (!apiKey.trim()) {
       setTestResult({ success: false, message: 'API Key 不能为空' })
       return

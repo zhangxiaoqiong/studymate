@@ -572,6 +572,81 @@ async def test_llm_config(request: TestLLMConfigRequest):
             "message": f"❌ 连接失败: {error_msg}"
         }
 
+
+@app.post("/test_existing_llm_config/{config_id}")
+async def test_existing_llm_config(config_id: int):
+    """测试现有配置的 API Key（编辑时使用，不需要前端提供 API Key）"""
+    from services.db import get_config_by_id
+
+    try:
+        # 获取配置
+        config = get_config_by_id(config_id)
+        if not config:
+            return {
+                "success": False,
+                "message": "❌ 配置不存在"
+            }
+
+        # 解密 API Key
+        decrypted = get_decrypted_config(config['config_name'])
+        if not decrypted or not decrypted.get('api_key'):
+            return {
+                "success": False,
+                "message": "❌ 无法获取 API Key"
+            }
+
+        # 构建请求
+        headers = {
+            "Authorization": f"Bearer {decrypted['api_key']}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": config.get('model_name'),
+            "messages": [{"role": "user", "content": "test"}],
+            "max_tokens": 10
+        }
+
+        api_url = f"{config.get('api_base', '').rstrip('/')}/chat/completions"
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                api_url,
+                json=payload,
+                headers=headers
+            )
+
+            if response.status_code == 200:
+                return {
+                    "success": True,
+                    "message": "✅ 连接成功，API 密钥有效"
+                }
+            else:
+                error_detail = "API 返回错误"
+                try:
+                    error_data = response.json()
+                    if "error" in error_data:
+                        error_detail = error_data["error"].get("message", str(error_data))
+                    else:
+                        error_detail = str(error_data)
+                except:
+                    error_detail = response.text[:200]
+
+                return {
+                    "success": False,
+                    "message": f"❌ API 错误 ({response.status_code}): {error_detail}"
+                }
+    except asyncio.TimeoutError:
+        return {
+            "success": False,
+            "message": "❌ 连接超时（15秒），请检查 API 地址是否正确"
+        }
+    except Exception as e:
+        error_msg = str(e)
+        return {
+            "success": False,
+            "message": f"❌ 连接失败: {error_msg}"
+        }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
