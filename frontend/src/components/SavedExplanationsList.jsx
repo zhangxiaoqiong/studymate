@@ -51,10 +51,10 @@ const SavedExplanationsList = ({
         ) : (
           <div className="space-y-2 p-3">
             {Object.entries(savedExplanations).map(([keyword, data]) => (
-              <button
+              <div
                 key={keyword}
                 onClick={() => onSelectKeyword(keyword)}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${
+                className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
                   selectedKeyword === keyword
                     ? 'border-blue-400 bg-blue-50'
                     : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
@@ -84,7 +84,7 @@ const SavedExplanationsList = ({
                     </svg>
                   </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}

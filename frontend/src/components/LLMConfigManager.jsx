@@ -52,20 +52,27 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   const loadConfigs = async () => {
     try {
       const response = await fetch('/api/user_config')
-      if (response.ok) {
-        const data = await response.json()
-        console.log('加载配置成功:', data.configs)
-        setConfigs(data.configs || [])
+      console.log('加载配置响应状态:', response.status)
 
-        // 查找活跃配置
-        const active = data.configs?.find(c => c.is_active)
-        if (active) {
-          console.log('找到活跃配置:', active.config_name)
-          setActiveConfigId(active.id)
-        }
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('HTTP 错误:', response.status, errorText.substring(0, 200))
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('加载配置成功:', data.configs)
+      setConfigs(data.configs || [])
+
+      // 查找活跃配置
+      const active = data.configs?.find(c => c.is_active)
+      if (active) {
+        console.log('找到活跃配置:', active.config_name)
+        setActiveConfigId(active.id)
       }
     } catch (err) {
       console.error('加载配置失败:', err)
+      setError('加载配置失败: ' + err.message)
     }
   }
 
