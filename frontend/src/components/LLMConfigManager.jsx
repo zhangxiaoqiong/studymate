@@ -231,6 +231,10 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
       const data = await response.json()
       setTestResult(data)
     } catch (err) {
