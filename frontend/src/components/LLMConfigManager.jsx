@@ -54,11 +54,13 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
       const response = await fetch('/api/user_config')
       if (response.ok) {
         const data = await response.json()
+        console.log('加载配置成功:', data.configs)
         setConfigs(data.configs || [])
 
         // 查找活跃配置
         const active = data.configs?.find(c => c.is_active)
         if (active) {
+          console.log('找到活跃配置:', active.config_name)
           setActiveConfigId(active.id)
         }
       }
@@ -94,12 +96,16 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   }
 
   const handleEdit = async (config) => {
+    console.log('编辑配置:', config.config_name)
     try {
-      const response = await fetch(`/api/llm_config/${encodeURIComponent(config.config_name)}`)
+      const url = `/api/llm_config/${encodeURIComponent(config.config_name)}`
+      console.log('获取配置详情:', url)
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('获取配置失败')
       }
       const fullConfig = await response.json()
+      console.log('获取配置成功:', fullConfig)
 
       setApiBase(fullConfig.apiBase)
       setApiKey(fullConfig.apiKey)
@@ -112,6 +118,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
       setError(null)
       setTestResult(null)
     } catch (err) {
+      console.error('获取配置失败:', err)
       alert('获取配置失败: ' + err.message)
     }
   }
@@ -187,24 +194,31 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   }
 
   const handleSwitch = async (config) => {
+    console.log('切换配置:', config.config_name, config.id)
     if (activeConfigId === config.id) {
+      console.log('配置已激活，跳过')
       return
     }
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/activate_config/${encodeURIComponent(config.config_name)}`, {
+      const url = `/api/activate_config/${encodeURIComponent(config.config_name)}`
+      console.log('发送激活请求:', url)
+      const response = await fetch(url, {
         method: 'POST',
       })
 
       if (!response.ok) {
-        throw new Error('切换失败')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || '切换失败')
       }
 
+      console.log('切换成功，重新加载配置')
       await loadConfigs()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
+      console.error('切换失败:', err)
       alert('切换失败: ' + err.message)
     } finally {
       setLoading(false)
