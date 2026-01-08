@@ -5,7 +5,7 @@
 ## 项目结构
 
 ```
-doc-explorer/
+studymate/
 ├── backend/                    # FastAPI后端
 │   ├── main.py                # 应用入口
 │   ├── requirements.txt        # Python依赖

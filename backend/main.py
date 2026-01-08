@@ -36,7 +36,7 @@ import asyncio
 
 load_dotenv()
 
-app = FastAPI(title="Doc Explorer API")
+app = FastAPI(title="StudyMate API", description="智能学习助手 - AI 驱动的知识探索平台")
 
 # CORS
 app.add_middleware(
