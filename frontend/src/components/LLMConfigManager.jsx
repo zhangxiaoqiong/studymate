@@ -8,6 +8,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   const [temperature, setTemperature] = useState(0.7)
   const [maxTokens, setMaxTokens] = useState(1000)
   const [configName, setConfigName] = useState('')
+  const [keepExistingKey, setKeepExistingKey] = useState(false)  // 是否保持现有 API Key
 
   // UI 状态
   const [configs, setConfigs] = useState([])
@@ -92,6 +93,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
     setTemperature(0.7)
     setMaxTokens(1000)
     setConfigName('')
+    setKeepExistingKey(false)
     setError(null)
     setTestResult(null)
   }
@@ -115,13 +117,14 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
       console.log('获取配置成功:', fullConfig)
 
       setApiBase(fullConfig.apiBase)
-      setApiKey(fullConfig.apiKey)
       setModelName(fullConfig.modelName)
       setTemperature(fullConfig.temperature || 0.7)
       setMaxTokens(fullConfig.maxTokens || 1000)
       setConfigName(config.config_name)
       setIsEditing(true)
       setEditingId(config.id)
+      setKeepExistingKey(true)  // 默认保持现有 API Key
+      setApiKey('')  // 不显示现有 API Key
       setError(null)
       setTestResult(null)
     } catch (err) {
@@ -135,7 +138,9 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
       setError('模型名称不能为空')
       return
     }
-    if (!apiKey.trim() && !isEditing) {
+
+    // 新建时 API Key 必须填，编辑时可以保持现有
+    if (!editingId && !apiKey.trim()) {
       setError('API Key 不能为空')
       return
     }
@@ -151,7 +156,7 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
         body: JSON.stringify({
           configName: generatedName,
           apiBase,
-          apiKey,
+          apiKey: keepExistingKey ? '' : apiKey,  // 如果保持现有，不发送 API Key
           modelName,
           temperature,
           maxTokens,
@@ -327,17 +332,42 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               API Key <span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-xxxxx..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
-            />
-            <p className="text-xs text-gray-500 mt-1">🔒 加密存储</p>
+
+            {editingId && (
+              <div className="mb-3 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="keepKey"
+                  checked={keepExistingKey}
+                  onChange={(e) => setKeepExistingKey(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="keepKey" className="text-sm text-gray-700">
+                  保持现有 API Key 不变
+                </label>
+              </div>
+            )}
+
+            {!keepExistingKey && (
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-xxxxx..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
+              />
+            )}
+
+            {keepExistingKey && (
+              <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 text-sm">
+                ✓ 使用现有的 API Key（不会显示或修改）
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 mt-1">🔒 API Key 加密存储在服务器，不会在前端显示</p>
           </div>
 
           <div>

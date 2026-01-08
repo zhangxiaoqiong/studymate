@@ -339,24 +339,19 @@ async def get_llm_config_detail(config_name: str):
 
 @app.get("/llm_config_by_id/{config_id}")
 async def get_llm_config_by_id(config_id: int):
-    """按 ID 获取配置的完整信息（包括解密的 API Key）"""
+    """按 ID 获取配置的完整信息（不包含 API Key，安全起见）"""
     from services.db import get_config_by_id
     config = get_config_by_id(config_id)
     if not config:
         raise HTTPException(status_code=404, detail="配置不存在")
 
-    # 解密 API Key
-    from services.crypto import decrypt_api_key
-    api_key = decrypt_api_key(config.get('api_key_encrypted', ''))
-    config_name = config.get('config_name')
-
     return {
-        "configName": config_name,
+        "configName": config.get('config_name'),
         "apiBase": config.get('api_base'),
-        "apiKey": api_key,
         "modelName": config.get('model_name'),
         "temperature": config.get('temperature', 0.7),
         "maxTokens": config.get('max_tokens', 1000),
+        # 注意：故意不返回 API Key，以保护安全
     }
 
 
