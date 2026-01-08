@@ -96,9 +96,9 @@ const LLMConfigManager = ({ onClose, isInMenu = false }) => {
   }
 
   const handleEdit = async (config) => {
-    console.log('编辑配置:', config.config_name)
+    console.log('编辑配置:', config.config_name, 'ID:', config.id)
     try {
-      const url = `/api/llm_config/${encodeURIComponent(config.config_name)}`
+      const url = `/api/llm_config_by_id/${config.id}`
       console.log('获取配置详情:', url)
       const response = await fetch(url)
       if (!response.ok) {

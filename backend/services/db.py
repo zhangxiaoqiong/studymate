@@ -68,6 +68,22 @@ def get_config_by_name(config_name: str) -> dict:
     return None
 
 
+def get_config_by_id(config_id: int) -> dict:
+    """按 ID 获取配置"""
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM llm_configs WHERE id = ?", (config_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return dict(row)
+    return None
+
+
 def get_all_configs() -> list:
     """获取所有配置（不含敏感信息）"""
     init_db()
