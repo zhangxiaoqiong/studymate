@@ -127,7 +127,7 @@ class KeywordExtractor:
         Returns:
             list: 关键词列表，每项包含 keyword 字段
         """
-        prompt = f"""请从以下文本中提取最多10个关键词或关键概念。
+        prompt = f"""请从以下文本中提取最多50个关键词或关键概念。
 每个关键词必须是文本中原样出现的词汇，不能改写。
 
 文本：
@@ -142,7 +142,7 @@ class KeywordExtractor:
 要求：
 - 优先提取较长的短语或专业术语
 - 同一个关键词不要出现多次
-- 最多10个关键词
+- 最多50个关键词
 - 只返回JSON，不添加其他文字"""
 
         content = None
@@ -163,7 +163,7 @@ class KeywordExtractor:
                         "model": self.model,
                         "messages": [{"role": "user", "content": prompt}],
                         "temperature": 0.3,
-                        "max_tokens": 1000
+                        "max_tokens": 6000
                     }
                 )
 
