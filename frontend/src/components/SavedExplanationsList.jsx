@@ -1,12 +1,9 @@
 import React from 'react'
+import { useApp } from '../context/AppContext'
 
-const SavedExplanationsList = ({
-  savedExplanations,
-  selectedKeyword,
-  onSelectKeyword,
-  onDelete,
-  width = 350,
-}) => {
+const SavedExplanationsList = ({ width = 350 }) => {
+  const { state, setSelectedKeyword } = useApp()
+  const savedExplanations = state.savedExplanations || {}
   const formatDate = (timestamp) => {
     const now = Date.now()
     const diff = now - timestamp
@@ -21,7 +18,7 @@ const SavedExplanationsList = ({
 
   const handleDeleteClick = (e, keyword) => {
     e.stopPropagation()
-    onDelete(keyword)
+    // TODO: 实现删除功能
   }
 
   return (
@@ -53,7 +50,7 @@ const SavedExplanationsList = ({
             {Object.entries(savedExplanations).map(([keyword, data]) => (
               <div
                 key={keyword}
-                onClick={() => onSelectKeyword(keyword)}
+                onClick={() => setSelectedKeyword(keyword)}
                 className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
                   selectedKeyword === keyword
                     ? 'border-blue-400 bg-blue-50'

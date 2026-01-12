@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
+import { useApp } from '../context/AppContext'
 import SettingsMenu from './SettingsMenu'
 
-const DocumentHistory = ({ documents, activeDocId, onSelectDoc, onNewDoc, onDeleteDoc }) => {
+const DocumentHistory = () => {
+  const { state, setActiveDocId, addDocument, deleteDocument } = useApp()
+  const { documents = [], activeDocId } = state
   const [expanded, setExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSettings, setShowSettings] = useState(false)
@@ -42,7 +45,7 @@ const DocumentHistory = ({ documents, activeDocId, onSelectDoc, onNewDoc, onDele
       {/* 头部 */}
       <div className="p-4 border-b border-gray-800 space-y-3">
         <button
-          onClick={onNewDoc}
+          onClick={() => addDocument({ text: '', title: '新对话', keywords: [], spans: [], timestamp: Date.now() })}
           className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
         >
           <span>➕</span>
@@ -95,7 +98,7 @@ const DocumentHistory = ({ documents, activeDocId, onSelectDoc, onNewDoc, onDele
                 }`}
               >
                 <button
-                  onClick={() => onSelectDoc(doc.id)}
+                  onClick={() => setActiveDocId(doc.id)}
                   className="w-full text-left px-3 py-2 flex-1 flex flex-col gap-1 truncate"
                 >
                   <div className="text-sm font-medium truncate text-white">
@@ -115,7 +118,7 @@ const DocumentHistory = ({ documents, activeDocId, onSelectDoc, onNewDoc, onDele
                         `确定要删除"${getDocTitle(doc)}"吗？`
                       )
                     ) {
-                      onDeleteDoc(doc.id)
+                      deleteDocument(doc.id)
                     }
                   }}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-600 rounded text-red-400 hover:text-white"

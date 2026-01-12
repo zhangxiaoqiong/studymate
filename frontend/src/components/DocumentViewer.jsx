@@ -1,24 +1,21 @@
 import React from 'react'
+import { useApp } from '../context/AppContext'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-const DocumentViewer = ({
-  text,
-  title,
-  spans,
-  onKeywordClick,
-  isEditing,
-  editingTitle,
-  editingText,
-  onStartEdit,
-  onCancelEdit,
-  onSaveEdit,
-  onTitleChange,
-  onTextChange,
-  showReanalysisDialog,
-  onReanalysisChoice,
-  isReanalyzing,
-}) => {
+const DocumentViewer = () => {
+  const { state, setSelectedKeyword, setEditing, setEditingTitle, setEditingText } = useApp()
+  const {
+    documentData = {},
+    spans = [],
+    isEditing,
+    editingTitle,
+    editingText,
+    showReanalysisDialog,
+    isReanalyzing,
+  } = state
+
+  const { text = '', title = '' } = documentData
   const renderHighlightedText = () => {
     if (!spans || spans.length === 0) {
       return <span>{text}</span>
@@ -41,7 +38,7 @@ const DocumentViewer = ({
         <span
           key={`keyword-${i}`}
           className="highlight"
-          onClick={() => onKeywordClick(span.keyword)}
+          onClick={() => setSelectedKeyword(span.keyword)}
         >
           {text.substring(span.start, span.end)}
         </span>

@@ -16,6 +16,7 @@ const initialState = {
   // 选中和解释相关
   selectedKeyword: null,
   explanation: null,
+  savedExplanations: {},
 
   // 编辑模式
   isEditing: false,
