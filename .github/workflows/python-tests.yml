@@ -41,6 +41,7 @@ jobs:
         flake8 backend --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics --exclude=*_backup.py
 
     - name: Run tests with pytest
+      shell: bash
       run: |
         if [ -d "backend/tests" ]; then
           pytest backend/tests --cov=backend --cov-report=xml --cov-report=html
