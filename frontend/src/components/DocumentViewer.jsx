@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm'
 const DocumentViewer = () => {
   const { state, setSelectedKeyword, setEditing, setEditingTitle, setEditingText } = useApp()
   const {
-    documentData = {},
+    documentData,
     spans = [],
     isEditing,
     editingTitle,
@@ -15,7 +15,7 @@ const DocumentViewer = () => {
     isReanalyzing,
   } = state
 
-  const { text = '', title = '' } = documentData
+  const { text = '', title = '' } = documentData || {}
   const renderHighlightedText = () => {
     if (!spans || spans.length === 0) {
       return <span>{text}</span>
