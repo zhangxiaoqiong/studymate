@@ -1,5 +1,10 @@
 # StudyMate - 智能学习助手
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 一个结合 AI 的学习辅助工具，通过智能提取关键概念和生成详细解释，帮助你深度理解任何文档。
 
 ## 项目结构
@@ -178,6 +183,23 @@ AI生成详细解释
 - [ ] 支持多语言
 - [ ] 关键词去重和嵌套词处理优化
 
+## 🤝 参与贡献
+
+欢迎提交 Issue 和 Pull Request！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与项目开发。
+
+### 贡献方式
+
+1. **报告 Bug** - 在 [Issues](../../issues) 中描述问题
+2. **建议功能** - 提交你的想法和建议
+3. **提交代码** - Fork 本项目，提交 Pull Request
+4. **改进文档** - 完善项目文档和注释
+
+### 许可证
+
+本项目采用 [MIT License](LICENSE) - 详见 [LICENSE](LICENSE) 文件
+
 ---
 
 🚀 现在就试试吧！
+
+感谢所有为这个项目做出贡献的人！

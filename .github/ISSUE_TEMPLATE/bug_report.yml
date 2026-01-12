@@ -1,0 +1,110 @@
+name: "🐛 Bug Report"
+description: "报告一个 Bug"
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢报告 Bug！请尽可能详细地填写以下信息，以便我们快速定位问题。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "问题描述"
+      description: "清楚地描述你遇到的问题"
+      placeholder: "例如：点击按钮时应用崩溃..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "复现步骤"
+      description: "提供能够重现此问题的步骤"
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "预期行为"
+      description: "描述应该发生什么"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "实际行为"
+      description: "实际发生了什么"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "错误日志"
+      description: "粘贴任何相关的错误信息"
+      render: "bash"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: "操作系统"
+      options:
+        - Windows 10
+        - Windows 11
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Linux (Ubuntu)
+        - Linux (Other)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: python
+    attributes:
+      label: "Python 版本"
+      options:
+        - "3.9"
+        - "3.10"
+        - "3.11"
+        - "3.12"
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: node
+    attributes:
+      label: "Node.js 版本"
+      options:
+        - "18.x"
+        - "20.x"
+        - "22.x"
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "其他信息"
+      description: "添加任何其他可能有用的信息（截图、配置等）"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "检查清单"
+      description: "确保你已经完成以下步骤"
+      options:
+        - label: "我已查看现有 Issues，确认这不是重复报告"
+          required: true
+        - label: "我已尝试最新版本的代码"
+          required: true

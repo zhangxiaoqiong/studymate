@@ -1,0 +1,39 @@
+{
+  "name": "StudyMate",
+  "description": "An AI-powered learning assistant that intelligently extracts key concepts and generates detailed explanations to help you deeply understand any document.",
+  "version": "1.0.0",
+  "keywords": [
+    "ai",
+    "learning",
+    "education",
+    "nlp",
+    "document-analysis",
+    "keyword-extraction",
+    "deepseek",
+    "react",
+    "fastapi"
+  ],
+  "homepage": "https://github.com/yourusername/studymate",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/studymate.git"
+  },
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com",
+    "url": "https://github.com/yourusername"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/studymate/issues",
+    "email": "your.email@example.com"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/yourusername"
+  },
+  "engines": {
+    "python": ">=3.9",
+    "node": ">=18.0.0"
+  }
+}
