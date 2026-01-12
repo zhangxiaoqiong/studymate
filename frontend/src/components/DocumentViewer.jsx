@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 const DocumentViewer = () => {
-  const { state, setSelectedKeyword, setEditing, setEditingTitle, setEditingText } = useApp()
+  const { state, setSelectedKeyword, setEditing, setEditingTitle, setEditingText, updateDocument } = useApp()
   const {
     documentData,
     spans = [],
@@ -16,6 +16,42 @@ const DocumentViewer = () => {
   } = state
 
   const { text = '', title = '' } = documentData || {}
+
+  // Handler functions
+  const handleStartEdit = () => {
+    if (documentData) {
+      setEditingTitle(documentData.title || '')
+      setEditingText(documentData.text || '')
+    }
+    setEditing(true)
+  }
+
+  const handleCancelEdit = () => {
+    setEditing(false)
+  }
+
+  const handleSaveEdit = (newTitle, newText) => {
+    if (documentData) {
+      updateDocument({
+        ...documentData,
+        title: newTitle,
+        text: newText,
+      })
+    }
+    setEditing(false)
+  }
+
+  const handleTitleChange = (value) => {
+    setEditingTitle(value)
+  }
+
+  const handleTextChange = (value) => {
+    setEditingText(value)
+  }
+
+  const handleReanalysisChoice = (shouldReanalyze) => {
+    // TODO: Implement reanalysis logic
+  }
   const renderHighlightedText = () => {
     if (!spans || spans.length === 0) {
       return <span>{text}</span>
@@ -70,7 +106,7 @@ const DocumentViewer = () => {
               <input
                 type="text"
                 value={editingTitle}
-                onChange={(e) => onTitleChange(e.target.value)}
+                onChange={(e) => handleTitleChange(e.target.value)}
                 placeholder="输入文档标题，或留空使用默认标题"
                 className="w-full px-4 py-3 text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all placeholder-gray-400"
               />
@@ -82,7 +118,7 @@ const DocumentViewer = () => {
               </label>
               <textarea
                 value={editingText}
-                onChange={(e) => onTextChange(e.target.value)}
+                onChange={(e) => handleTextChange(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none transition-all font-mono text-sm leading-relaxed"
                 rows={20}
               />
@@ -95,13 +131,13 @@ const DocumentViewer = () => {
 
         <div className="border-t border-gray-200 bg-gray-50 p-4 flex gap-3 justify-end">
           <button
-            onClick={onCancelEdit}
+            onClick={handleCancelEdit}
             className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-medium transition-colors"
           >
             ✕ 取消
           </button>
           <button
-            onClick={() => onSaveEdit(editingTitle, editingText)}
+            onClick={() => handleSaveEdit(editingTitle, editingText)}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
             ✓ 保存
@@ -121,8 +157,8 @@ const DocumentViewer = () => {
                   <h3 className="text-lg font-bold text-gray-900 mb-4">📝 文本已改变</h3>
                   <p className="text-gray-600 mb-6">检测到您修改了文本内容。是否要重新分析文本以更新关键词？</p>
                   <div className="flex gap-3">
-                    <button onClick={() => onReanalysisChoice(false)} disabled={isReanalyzing} className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg">保留原有</button>
-                    <button onClick={() => onReanalysisChoice(true)} disabled={isReanalyzing} className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg">重新分析</button>
+                    <button onClick={() => handleReanalysisChoice(false)} disabled={isReanalyzing} className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg">保留原有</button>
+                    <button onClick={() => handleReanalysisChoice(true)} disabled={isReanalyzing} className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg">重新分析</button>
                   </div>
                 </>
               )}
@@ -146,7 +182,7 @@ const DocumentViewer = () => {
               <span><span className="font-semibold text-gray-700">{spans?.length || 0}</span> 关键词</span>
             </div>
           </div>
-          <button onClick={onStartEdit} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm flex-shrink-0">✎ 编辑</button>
+          <button onClick={handleStartEdit} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm flex-shrink-0">✎ 编辑</button>
         </div>
       </div>
 
