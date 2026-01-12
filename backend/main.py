@@ -499,7 +499,6 @@ async def get_llm_config_endpoint():
 
 def get_current_llm_config():
     """获取当前的大模型配置（内部使用）"""
-    global llm_config
     return llm_config
 
 
