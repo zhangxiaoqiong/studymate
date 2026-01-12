@@ -278,7 +278,7 @@ Closes #123
 - 遵循 [PEP 8](https://www.python.org/dev/peps/pep-0008/)
 - 使用 4 个空格缩进
 - 最大行长 100 个字符
-- 使用类型提示（Python 3.9+）
+- 使用类型提示（Python 3.12+）
 
 ```python
 def extract_keywords(text: str, max_count: int = 50) -> List[Dict]:

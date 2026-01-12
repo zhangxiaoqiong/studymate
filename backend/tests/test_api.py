@@ -1,22 +1,28 @@
 """
 测试 API 端点
 """
-import pytest
-from fastapi.testclient import TestClient
 
 
-def test_root_endpoint():
+def test_basic():
     """
-    测试根端点
+    基本测试 - 确保 pytest 能正常运行
     """
-    # 这是一个占位符测试，确保 pytest 能找到并运行测试
     assert True
 
 
-def test_example():
+def test_math():
     """
-    基本测试示例
+    数学测试示例
     """
-    # 简单的示例测试
     result = 1 + 1
     assert result == 2
+
+
+def test_string():
+    """
+    字符串测试示例
+    """
+    text = "StudyMate"
+    assert len(text) == 9
+    assert text.startswith("Study")
+

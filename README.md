@@ -1,7 +1,7 @@
 # StudyMate - 智能学习助手
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -44,7 +44,7 @@ studymate/
 ### 1. 环境准备
 
 **要求：**
-- Python 3.9+
+- Python 3.12+
 - Node.js 18+
 - DeepSeek API Key
 

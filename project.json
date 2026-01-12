@@ -33,7 +33,7 @@
     "url": "https://github.com/sponsors/yourusername"
   },
   "engines": {
-    "python": ">=3.9",
+    "python": ">=3.12",
     "node": ">=18.0.0"
   }
 }

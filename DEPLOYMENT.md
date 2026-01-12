@@ -129,7 +129,7 @@ API_BASE_URL=https://api.deepseek.com/v1
 创建 `Dockerfile`:
 ```dockerfile
 # 后端
-FROM python:3.11-slim
+FROM python:3.12-slim
 WORKDIR /app/backend
 COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
