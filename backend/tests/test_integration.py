@@ -62,7 +62,7 @@ class TestDocumentUpload:
 
     def test_very_long_text(self):
         """测试处理很长的文本"""
-        long_text = "测试文本。" * 1000  # 生成很长的文本
+        long_text = "测试文本。" * 2000  # 生成很长的文本
         test_data = {
             "text": long_text,
             "title": "长文本测试"
@@ -158,7 +158,7 @@ class TestHighlightGeneration:
         text = "深度学习是机器学习的一个分支。"
         spans = [
             {"keyword": "深度学习", "start": 0, "end": 4},
-            {"keyword": "机器学习", "start": 6, "end": 10},
+            {"keyword": "机器学习", "start": 5, "end": 9},
         ]
 
         for span in spans:
@@ -170,14 +170,14 @@ class TestHighlightGeneration:
             assert span["end"] <= len(text)
             # 验证 span 对应的文本匹配
             extracted_text = text[span["start"]:span["end"]]
-            assert span["keyword"] in extracted_text or extracted_text in text
+            assert span["keyword"] == extracted_text or span["keyword"] in text
 
     def test_overlapping_spans(self):
         """测试重叠的 spans"""
         text = "自然语言处理"
         spans = [
-            {"keyword": "自然语言", "start": 0, "end": 3},
-            {"keyword": "语言处理", "start": 2, "end": 4},
+            {"keyword": "自然语言", "start": 0, "end": 4},
+            {"keyword": "语言处理", "start": 2, "end": 6},
         ]
 
         # 检查是否有重叠
@@ -314,7 +314,7 @@ class TestPerformance:
         assert len(explanation.strip()) > 50
 
         # 验证包含多个句子
-        sentences = [s for s in explanation.strip().split("。") if s]  # 过滤空句子
+        sentences = [s.strip() for s in explanation.strip().split("。") if s.strip()]  # 过滤空句子
         assert len(sentences) > 3
 
 
