@@ -67,7 +67,7 @@ class TestDocumentUpload:
             "text": long_text,
             "title": "长文本测试"
         }
-        assert len(test_data["text"]) > 10000
+        assert len(test_data["text"]) >= 10000
         # 应该能处理但可能返回截断或分块的关键词
 
 
