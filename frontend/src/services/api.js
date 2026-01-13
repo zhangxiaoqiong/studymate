@@ -107,3 +107,14 @@ export const askFollowupQuestionStream = async (keyword, explanation, question, 
     throw error
   }
 }
+
+// 将文本转换为Markdown格式
+export const parseToMarkdown = async (text, title = 'Untitled') => {
+  try {
+    const response = await api.post('/parse_to_markdown', { text, title })
+    return response.data
+  } catch (error) {
+    console.error('Failed to parse to markdown:', error)
+    throw error
+  }
+}

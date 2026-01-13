@@ -46,3 +46,6 @@ Thumbs.db
 # 项目特定
 backend/data/
 uploads/
+
+# Claude Code临时文件
+tmpclaude-*/

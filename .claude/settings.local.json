@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -n \"uses:\" .github/workflows/*.yml)"
+      "Bash(grep -n \"uses:\" .github/workflows/*.yml)",
+      "Bash(npm run build)"
     ]
   }
 }

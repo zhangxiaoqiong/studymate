@@ -301,6 +301,77 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
 
+
+class ParseToMarkdownRequest(BaseModel):
+    text: str
+    title: str = "Untitled"
+
+
+@app.post("/parse_to_markdown")
+async def parse_to_markdown(request: ParseToMarkdownRequest):
+    """将纯文本自动解析并转换为结构化的 Markdown 格式"""
+    from services.explainer import KeywordExplainer
+
+    if not request.text.strip():
+        raise HTTPException(status_code=400, detail="文本不能为空")
+
+    try:
+        explainer = KeywordExplainer(config=llm_config)
+
+        prompt = f"""请将以下文本重新组织并转换为清晰的Markdown格式。
+
+要求：
+1. 自动识别文本的结构和逻辑关系
+2. 使用适当的Markdown标题（## 和 ###）来组织内容
+3. 将相关内容分组到逻辑段落中
+4. 使用列表、加粗、代码块等Markdown元素来提高可读性
+5. 保留原文的所有重要信息
+6. 避免添加不存在于原文的内容
+
+原始文本：
+{request.text}
+
+请输出结构化的Markdown内容："""
+
+        # 调用LLM进行转换
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{llm_config['apiBase']}/chat/completions",
+                headers={{
+                    "Authorization": f"Bearer {llm_config['apiKey']}",
+                    "Content-Type": "application/json"
+                }},
+                json={{
+                    "model": llm_config["modelName"],
+                    "messages": [{{"role": "user", "content": prompt}}],
+                    "temperature": 0.5,
+                    "max_tokens": 3000,
+                    "stream": False
+                }},
+                timeout=30.0
+            )
+
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"LLM API error: {response.text}"
+                )
+
+            data = response.json()
+            markdown_text = data["choices"][0]["message"]["content"]
+
+            return {{
+                "title": request.title,
+                "markdown": markdown_text,
+                "message": "文本已转换为Markdown格式"
+            }}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in parse_to_markdown: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"解析失败: {str(e)}")
+
 # ========== 配置管理 ==========
 
 from services.db import init_db, get_active_config, get_all_configs, save_config, activate_config, activate_config_by_id, delete_config, get_decrypted_config, get_config_by_name
