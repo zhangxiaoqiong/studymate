@@ -100,7 +100,7 @@ function AppContent() {
               className="bg-white border-l border-gray-200 overflow-y-auto flex flex-col"
               style={{ width: `${sidebarWidth}px` }}
             >
-              <KeywordsList />
+              {/* Keywords 列表区域 */}
             </div>
           </>
         )}
