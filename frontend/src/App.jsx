@@ -86,7 +86,7 @@ function AppContent() {
         </div>
 
         {/* Middle - Document Center */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden flex flex-col">
           <DocumentCenter onEditClick={() => setShowEditor(true)} />
         </div>
 
