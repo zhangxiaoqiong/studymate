@@ -26,8 +26,12 @@ const DocumentCenter = ({ onEditClick }) => {
       return <code className="bg-gray-200 px-2 py-1 rounded text-sm text-gray-900 font-mono" {...props}>{children}</code>
     }
 
-    // 获取代码内容
-    const code = String(children).replace(/\n$/, '')
+    // 获取代码内容，清理所有格式残留
+    let code = String(children)
+      .replace(/\n$/, '') // 移除末尾换行
+      .replace(/^```[\w]*\n?/, '') // 移除开头的 ```language
+      .replace(/\n?```$/, '') // 移除末尾的 ```
+      .trim()
 
     // 代码块渲染
     return (
@@ -174,7 +178,7 @@ const DocumentCenter = ({ onEditClick }) => {
     return (
       <div className="flex-1 overflow-hidden flex flex-col bg-white">
         {/* Document Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200 shadow-sm">
+        <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200 shadow-sm flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-gray-900 truncate">📖 {documentData.title || 'Untitled'}</h1>
@@ -213,7 +217,7 @@ const DocumentCenter = ({ onEditClick }) => {
         </div>
 
         {/* Footer Hint */}
-        <div className="px-6 py-3 bg-blue-50 border-t border-blue-200 text-sm text-blue-700 flex items-center gap-2">
+        <div className="px-6 py-3 bg-blue-50 border-t border-blue-200 text-sm text-blue-700 flex items-center gap-2 flex-shrink-0">
           <span>💡</span>
           <span>在右侧关键词列表中点击关键词即可查看详细解释</span>
         </div>

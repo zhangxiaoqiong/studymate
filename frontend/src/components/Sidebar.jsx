@@ -22,8 +22,12 @@ const Sidebar = ({ width = 800 }) => {
       return <code className="bg-gray-200 px-2 py-1 rounded text-sm text-gray-900 font-mono" {...props}>{children}</code>
     }
 
-    // 获取代码内容
-    const code = String(children).replace(/\n$/, '')
+    // 获取代码内容，清理所有格式残留
+    let code = String(children)
+      .replace(/\n$/, '') // 移除末尾换行
+      .replace(/^```[\w]*\n?/, '') // 移除开头的 ```language
+      .replace(/\n?```$/, '') // 移除末尾的 ```
+      .trim()
 
     // 代码块渲染
     return (
