@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import DocumentCenter from './components/DocumentCenter'
+import KeywordsList from './components/KeywordsList'
 import Sidebar from './components/Sidebar'
 import DocumentHistory from './components/DocumentHistory'
 import ModelSwitcher from './components/ModelSwitcher'
@@ -100,7 +101,7 @@ function AppContent() {
               className="bg-white border-l border-gray-200 overflow-y-auto flex flex-col"
               style={{ width: `${sidebarWidth}px` }}
             >
-              {/* Keywords 列表区域 */}
+              <KeywordsList />
             </div>
           </>
         )}
