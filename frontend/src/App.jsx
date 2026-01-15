@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import DocumentCenter from './components/DocumentCenter'
-import KeywordsList from './components/KeywordsList'
 import Sidebar from './components/Sidebar'
 import DocumentHistory from './components/DocumentHistory'
 import ModelSwitcher from './components/ModelSwitcher'
