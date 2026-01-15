@@ -13,6 +13,9 @@ const initialState = {
   documents: [],
   activeDocId: null,
 
+  // 关键词列表
+  keywords: [],
+
   // 选中和解释相关
   selectedKeyword: null,
   explanation: null,
@@ -45,6 +48,13 @@ export const ACTIONS = {
   ADD_DOCUMENT: 'ADD_DOCUMENT',
   UPDATE_DOCUMENT: 'UPDATE_DOCUMENT',
   DELETE_DOCUMENT: 'DELETE_DOCUMENT',
+
+  // 关键词操作
+  SET_KEYWORDS: 'SET_KEYWORDS',
+  SAVE_EXPLANATION: 'SAVE_EXPLANATION',
+  DELETE_EXPLANATION: 'DELETE_EXPLANATION',
+  SET_SAVED_EXPLANATIONS: 'SET_SAVED_EXPLANATIONS',
+  ADD_CONVERSATION: 'ADD_CONVERSATION',
 
   // 选择和解释
   SET_SELECTED_KEYWORD: 'SET_SELECTED_KEYWORD',
@@ -111,6 +121,43 @@ function appReducer(state, action) {
       }
     }
 
+    // 关键词操作
+    case ACTIONS.SET_KEYWORDS:
+      return { ...state, keywords: action.payload }
+    case ACTIONS.SAVE_EXPLANATION:
+      return {
+        ...state,
+        savedExplanations: {
+          ...state.savedExplanations,
+          [action.payload.keyword]: {
+            explanation: action.payload.explanation,
+            timestamp: action.payload.timestamp,
+            conversations: action.payload.conversations || [],
+          },
+        },
+      }
+    case ACTIONS.DELETE_EXPLANATION: {
+      const updated = { ...state.savedExplanations }
+      delete updated[action.payload]
+      return { ...state, savedExplanations: updated }
+    }
+    case ACTIONS.SET_SAVED_EXPLANATIONS:
+      return { ...state, savedExplanations: action.payload }
+    case ACTIONS.ADD_CONVERSATION: {
+      const { keyword, question, answer } = action.payload
+      const updatedExplanations = { ...state.savedExplanations }
+      if (updatedExplanations[keyword]) {
+        updatedExplanations[keyword] = {
+          ...updatedExplanations[keyword],
+          conversations: [
+            ...(updatedExplanations[keyword].conversations || []),
+            { question, answer },
+          ],
+        }
+      }
+      return { ...state, savedExplanations: updatedExplanations }
+    }
+
     // 选择和解释
     case ACTIONS.SET_SELECTED_KEYWORD:
       return { ...state, selectedKeyword: action.payload }
@@ -159,29 +206,52 @@ function appReducer(state, action) {
  * 提供全局状态和操作方法
  */
 export function AppProvider({ children }) {
-  const [state, dispatch] = useReducer(appReducer, initialState)
-
-  // 从 localStorage 恢复状态
-  useEffect(() => {
+  // 从 localStorage 初始化状态，而不是使用 initialState
+  const [initState] = React.useState(() => {
     try {
       const savedHistory = localStorage.getItem('documentHistory')
       const savedActiveDocId = localStorage.getItem('activeDocId')
+      const savedKeywords = localStorage.getItem('keywords')
+      const savedSelectedKeyword = localStorage.getItem('selectedKeyword')
+      const savedExplanationsData = localStorage.getItem('savedExplanations')
+
+      let restoredState = { ...initialState }
 
       if (savedHistory) {
         const documents = JSON.parse(savedHistory)
-        dispatch({ type: ACTIONS.SET_DOCUMENTS, payload: documents })
+        restoredState.documents = documents
 
         // 如果有活跃文档ID，加载它
         if (savedActiveDocId && documents.some(doc => doc.id === savedActiveDocId)) {
           const activeDoc = documents.find(doc => doc.id === savedActiveDocId)
-          dispatch({ type: ACTIONS.SET_DOCUMENT_DATA, payload: activeDoc })
-          dispatch({ type: ACTIONS.SET_ACTIVE_DOC_ID, payload: savedActiveDocId })
+          restoredState.documentData = activeDoc
+          restoredState.activeDocId = savedActiveDocId
         }
       }
+
+      // 恢复关键词列表
+      if (savedKeywords) {
+        restoredState.keywords = JSON.parse(savedKeywords)
+      }
+
+      // 恢复已保存的解释
+      if (savedExplanationsData) {
+        restoredState.savedExplanations = JSON.parse(savedExplanationsData)
+      }
+
+      // 恢复选中的关键词
+      if (savedSelectedKeyword) {
+        restoredState.selectedKeyword = savedSelectedKeyword
+      }
+
+      return restoredState
     } catch (error) {
       console.error('Failed to restore state from localStorage:', error)
+      return initialState
     }
-  }, [])
+  })
+
+  const [state, dispatch] = useReducer(appReducer, initState)
 
   // 保存到 localStorage 的 useEffect
   useEffect(() => {
@@ -192,10 +262,20 @@ export function AppProvider({ children }) {
       } else {
         localStorage.removeItem('activeDocId')
       }
+      // 保存关键词列表
+      localStorage.setItem('keywords', JSON.stringify(state.keywords))
+      // 保存选中的关键词
+      if (state.selectedKeyword) {
+        localStorage.setItem('selectedKeyword', state.selectedKeyword)
+      } else {
+        localStorage.removeItem('selectedKeyword')
+      }
+      // 保存已保存的解释
+      localStorage.setItem('savedExplanations', JSON.stringify(state.savedExplanations))
     } catch (error) {
       console.error('Failed to save state to localStorage:', error)
     }
-  }, [state.documents, state.activeDocId])
+  }, [state.documents, state.activeDocId, state.keywords, state.selectedKeyword, state.savedExplanations])
 
   // 便捷操作方法
   const actions = {
@@ -221,6 +301,35 @@ export function AppProvider({ children }) {
     ),
     deleteDocument: useCallback(
       (id) => dispatch({ type: ACTIONS.DELETE_DOCUMENT, payload: id }),
+      []
+    ),
+    setKeywords: useCallback(
+      (keywords) => dispatch({ type: ACTIONS.SET_KEYWORDS, payload: keywords }),
+      []
+    ),
+    saveExplanation: useCallback(
+      (keyword, explanation) =>
+        dispatch({
+          type: ACTIONS.SAVE_EXPLANATION,
+          payload: {
+            keyword,
+            explanation,
+            timestamp: Date.now(),
+            conversations: [],
+          },
+        }),
+      []
+    ),
+    deleteExplanation: useCallback(
+      (keyword) => dispatch({ type: ACTIONS.DELETE_EXPLANATION, payload: keyword }),
+      []
+    ),
+    addConversation: useCallback(
+      (keyword, question, answer) =>
+        dispatch({
+          type: ACTIONS.ADD_CONVERSATION,
+          payload: { keyword, question, answer },
+        }),
       []
     ),
     setSelectedKeyword: useCallback(

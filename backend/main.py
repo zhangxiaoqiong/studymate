@@ -175,20 +175,25 @@ async def upload_document(request: DocumentUploadRequest):
 
 @app.post("/extract_keywords", response_model=dict)
 async def extract_keywords(request: DocumentUploadRequest):
-    """提取关键词并生成高亮数据"""
+    """提取关键词并返回结构化数据"""
     from services.keyword_extractor import KeywordExtractor
-    from services.highlighter import KeywordHighlighter
 
     extractor = KeywordExtractor(config=llm_config)
     keywords = await extractor.extract(request.text)
 
-    highlighter = KeywordHighlighter()
-    spans = highlighter.generate_spans(request.text, keywords)
+    # 为每个关键词添加 ID 和索引
+    keywords_with_id = [
+        {
+            "id": f"kw_{i}",
+            "keyword": kw["keyword"],
+            "index": i
+        }
+        for i, kw in enumerate(keywords)
+    ]
 
     return {
         "text": request.text,
-        "keywords": keywords,
-        "spans": spans
+        "keywords": keywords_with_id
     }
 
 @app.post("/explain_keyword", response_model=ExplainResponse)
@@ -337,17 +342,17 @@ async def parse_to_markdown(request: ParseToMarkdownRequest):
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{llm_config['apiBase']}/chat/completions",
-                headers={{
+                headers={
                     "Authorization": f"Bearer {llm_config['apiKey']}",
                     "Content-Type": "application/json"
-                }},
-                json={{
+                },
+                json={
                     "model": llm_config["modelName"],
-                    "messages": [{{"role": "user", "content": prompt}}],
+                    "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "max_tokens": 3000,
                     "stream": False
-                }},
+                },
                 timeout=30.0
             )
 
@@ -360,11 +365,24 @@ async def parse_to_markdown(request: ParseToMarkdownRequest):
             data = response.json()
             markdown_text = data["choices"][0]["message"]["content"]
 
-            return {{
+            # 移除代码块包装（如果 LLM 返回的内容被包裹在 ```markdown ``` 中）
+            if markdown_text.startswith("```markdown"):
+                markdown_text = markdown_text[len("```markdown"):]
+            elif markdown_text.startswith("```"):
+                markdown_text = markdown_text[len("```"):]
+
+            # 移除末尾的代码块标记
+            if markdown_text.endswith("```"):
+                markdown_text = markdown_text[:-3]
+
+            # 清理前后的空白
+            markdown_text = markdown_text.strip()
+
+            return {
                 "title": request.title,
                 "markdown": markdown_text,
                 "message": "文本已转换为Markdown格式"
-            }}
+            }
 
     except HTTPException:
         raise

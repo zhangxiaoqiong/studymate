@@ -3,16 +3,46 @@ import axios from 'axios'
 import { useApp } from '../context/AppContext'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { createElement as h } from 'react'
 
 const DocumentCenter = ({ onEditClick }) => {
-  const { state, setSelectedKeyword, addDocument } = useApp()
-  const { documentData, spans = [] } = state
+  const { state, setKeywords, addDocument, updateDocument, setDocumentData, setActiveDocId } = useApp()
+  const { documentData } = state
 
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [showMarkdownConverter, setShowMarkdownConverter] = useState(false)
+  const [convertingMarkdown, setConvertingMarkdown] = useState(false)
   const fileInputRef = useRef(null)
+
+  // 自定义代码块渲染
+  const CodeBlock = ({ node, inline, className, children, ...props }) => {
+    const match = /language-(\w+)/.exec(className || '')
+    const language = match ? match[1] : ''
+
+    if (inline) {
+      return <code className="bg-gray-200 px-2 py-1 rounded text-sm text-gray-900 font-mono" {...props}>{children}</code>
+    }
+
+    // 获取代码内容
+    const code = String(children).replace(/\n$/, '')
+
+    // 代码块渲染
+    return (
+      <div className="rounded-lg my-4 overflow-hidden border border-gray-700">
+        {language && (
+          <div className="bg-gray-800 text-gray-400 px-4 py-2 text-xs font-mono font-semibold">
+            {language}
+          </div>
+        )}
+        <pre className="bg-gray-900 text-green-400 p-4 overflow-x-auto">
+          <code className="text-sm font-mono leading-relaxed whitespace-pre-wrap break-words">{code}</code>
+        </pre>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -35,9 +65,12 @@ const DocumentCenter = ({ onEditClick }) => {
         title: text.substring(0, 50) || 'Untitled',
         text: text,
         keywords: response.data.keywords,
-        spans: response.data.spans,
-        createdAt: new Date().toISOString()
+        spans: [],
+        timestamp: Date.now()
       }
+
+      // 保存关键词到全局状态
+      setKeywords(response.data.keywords)
 
       addDocument(doc)
       setText('')
@@ -96,50 +129,48 @@ const DocumentCenter = ({ onEditClick }) => {
     if (file) handleFileUpload(file)
   }
 
-  const renderHighlightedText = () => {
-    if (!spans || spans.length === 0) {
-      return <span>{documentData.text}</span>
-    }
-
-    let lastIndex = 0
-    const elements = []
-    const sortedSpans = [...spans].sort((a, b) => a.start - b.start)
-
-    sortedSpans.forEach((span, i) => {
-      if (lastIndex < span.start) {
-        elements.push(
-          <span key={`text-${i}`}>
-            {documentData.text.substring(lastIndex, span.start)}
-          </span>
-        )
-      }
-
-      elements.push(
-        <span
-          key={`keyword-${i}`}
-          className="highlight"
-          onClick={() => setSelectedKeyword(span.keyword)}
-        >
-          {documentData.text.substring(span.start, span.end)}
-        </span>
-      )
-
-      lastIndex = span.end
-    })
-
-    if (lastIndex < documentData.text.length) {
-      elements.push(
-        <span key="text-end">
-          {documentData.text.substring(lastIndex)}
-        </span>
-      )
-    }
-
-    return elements
+  const renderDocumentContent = () => {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{ code: CodeBlock }}
+      >
+        {documentData.text}
+      </ReactMarkdown>
+    )
   }
 
-  // 文档预览模式
-  if (documentData) {
+  const handleConvertToMarkdown = async () => {
+    if (!documentData) return
+
+    setConvertingMarkdown(true)
+    try {
+      const response = await axios.post('/api/parse_to_markdown', {
+        text: documentData.text,
+        title: documentData.title
+      })
+
+      // 更新文档内容为 Markdown 格式
+      const updatedDoc = {
+        ...documentData,
+        text: response.data.markdown
+      }
+
+      // 更新全局状态
+      updateDocument(updatedDoc)
+      setShowMarkdownConverter(false)
+
+      // 显示成功提示
+      alert('✅ 已转换为Markdown格式！')
+    } catch (error) {
+      alert('❌ 转换失败：' + (error.response?.data?.detail || error.message))
+    } finally {
+      setConvertingMarkdown(false)
+    }
+  }
+
+  // 文档预览模式 - 只有当文档有实际内容（text不为空）时才显示预览
+  if (documentData && documentData.text.trim()) {
     return (
       <div className="flex-1 overflow-hidden flex flex-col bg-white">
         {/* Document Header */}
@@ -150,24 +181,21 @@ const DocumentCenter = ({ onEditClick }) => {
               <div className="flex gap-6 text-sm text-gray-600 mt-2">
                 <span>📊 <span className="font-semibold">{documentData.text.length}</span> 字符</span>
                 <span>📝 <span className="font-semibold">{documentData.text.split('\n').length}</span> 段落</span>
-                <span>🔑 <span className="font-semibold text-blue-600">{spans?.length || 0}</span> 关键词</span>
+                <span>🔑 <span className="font-semibold text-blue-600">{documentData.keywords?.length || 0}</span> 关键词</span>
               </div>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => setShowMarkdownConverter(!showMarkdownConverter)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex-shrink-0"
+              >
+                ✨ 转为Markdown
+              </button>
               <button
                 onClick={onEditClick}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex-shrink-0"
               >
                 ✎ 编辑
-              </button>
-              <button
-                onClick={() => {
-                  setTitle('')
-                  setText('')
-                }}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-medium transition-colors flex-shrink-0"
-              >
-                📤 新文档
               </button>
             </div>
           </div>
@@ -178,7 +206,7 @@ const DocumentCenter = ({ onEditClick }) => {
           <div className="px-8 py-6 max-w-4xl mx-auto">
             <div className="markdown-content text-gray-800 leading-relaxed">
               <div className="prose prose-lg">
-                {renderHighlightedText()}
+                {renderDocumentContent()}
               </div>
             </div>
           </div>
@@ -187,8 +215,42 @@ const DocumentCenter = ({ onEditClick }) => {
         {/* Footer Hint */}
         <div className="px-6 py-3 bg-blue-50 border-t border-blue-200 text-sm text-blue-700 flex items-center gap-2">
           <span>💡</span>
-          <span>点击 <span className="highlight text-sm">高亮关键词</span> 即可查看详细解释</span>
+          <span>在右侧关键词列表中点击关键词即可查看详细解释</span>
         </div>
+
+        {/* Markdown Conversion Modal */}
+        {showMarkdownConverter && documentData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">✨ 转换为Markdown</h3>
+                <p className="text-gray-600 mb-4">
+                  将文本内容自动格式化为结构化的Markdown格式。AI将识别标题、列表等结构并应用格式化。
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  转换后的内容将替换当前文档。转换通常需要几秒钟。
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowMarkdownConverter(false)}
+                    disabled={convertingMarkdown}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleConvertToMarkdown}
+                    disabled={convertingMarkdown}
+                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:bg-gray-400"
+                  >
+                    {convertingMarkdown ? '⏳ 转换中...' : '✨ 确认转换'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -196,7 +258,7 @@ const DocumentCenter = ({ onEditClick }) => {
   // 上传模式
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-blue-50 via-white to-gray-50">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-6 py-12">
         {/* 欢迎标题 */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">开始学习</h1>
@@ -279,5 +341,4 @@ const DocumentCenter = ({ onEditClick }) => {
     </div>
   )
 }
-
 export default DocumentCenter

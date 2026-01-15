@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import DocumentCenter from './components/DocumentCenter'
+import KeywordsList from './components/KeywordsList'
 import Sidebar from './components/Sidebar'
 import DocumentHistory from './components/DocumentHistory'
-import SavedExplanationsList from './components/SavedExplanationsList'
 import ModelSwitcher from './components/ModelSwitcher'
 import MarkdownEditor from './components/MarkdownEditor'
 import PromptManager from './components/PromptManager'
@@ -74,16 +74,6 @@ function AppContent() {
             >
               📋 Prompt
             </button>
-            <button
-              onClick={() => setShowEditor(true)}
-              disabled={!state.documentData}
-              className="px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 disabled:bg-gray-300 disabled:text-gray-500 rounded-lg font-medium transition-colors"
-            >
-              ✏️ 编辑
-            </button>
-            <a href="/settings" className="px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors">
-              ⚙️ 设置
-            </a>
           </div>
         </div>
       </div>
@@ -91,7 +81,7 @@ function AppContent() {
       {/* Main Content - Three Column Layout */}
       <div className="flex-1 overflow-hidden flex">
         {/* Left Sidebar - Document History */}
-        <div className="w-56 bg-white border-r border-gray-200 overflow-y-auto flex flex-col">
+        <div className="bg-white border-r border-gray-200 flex flex-col">
           <DocumentHistory />
         </div>
 
@@ -100,8 +90,8 @@ function AppContent() {
           <DocumentCenter onEditClick={() => setShowEditor(true)} />
         </div>
 
-        {/* Right Sidebar - Keyword Explanations */}
-        {state.selectedKeyword && (
+        {/* Right Panel - Keywords List (always visible) */}
+        {state.keywords && state.keywords.length > 0 && (
           <>
             <div
               className="w-1 bg-gray-200 hover:bg-blue-500 cursor-col-resize transition-colors"
@@ -111,18 +101,18 @@ function AppContent() {
               className="bg-white border-l border-gray-200 overflow-y-auto flex flex-col"
               style={{ width: `${sidebarWidth}px` }}
             >
-              <Sidebar width={sidebarWidth} />
+              <KeywordsList />
             </div>
           </>
         )}
-
-        {/* Saved Explanations List */}
-        {state.selectedKeyword && (
-          <div className="absolute bottom-4 right-4 z-40">
-            <SavedExplanationsList />
-          </div>
-        )}
       </div>
+
+      {/* Sidebar Overlay - Slides in from right */}
+      {state.selectedKeyword && (
+        <div className="sidebar-enter fixed top-0 right-0 h-screen z-50 border-l border-gray-200" style={{ width: '800px' }}>
+          <Sidebar width={800} />
+        </div>
+      )}
 
       {/* Markdown Editor Modal */}
       {showEditor && (
